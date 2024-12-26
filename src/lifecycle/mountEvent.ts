@@ -1,7 +1,7 @@
 import { waitElementFinishLoading, determineWindowPropertyIsLoaded } from '../common/utils/monitoringElement';
-import { updateCssRules, updateBackgroundImage } from './beforeMount';
-import { baidu, bing, google, urlChangeEvent } from './afterMount';
-import { hostname, search } from '../common/alias';
+import { updateCssRules, updateBackgroundImage, createNewURLCookieAfterMounted } from './beforeMount';
+import { baidu, bing, google, bindURLChangeEvent } from './afterMount';
+import { hostname } from '../common/alias';
 
 export async function beforeMountEvent() {
     const init = await Promise.race([determineWindowPropertyIsLoaded('$'), waitElementFinishLoading({ tagName: 'body' })]);
@@ -30,7 +30,10 @@ export async function beforeMountEvent() {
             }
             `);
     } else {
-        if (!search) updateBackgroundImage();
+        if (!location.search) {
+            updateBackgroundImage();
+            createNewURLCookieAfterMounted();
+        }
     }
 
     if (hostname.includes('google.com')) {
@@ -44,7 +47,7 @@ export async function beforeMountEvent() {
 }
 
 export function afterMountEvent() {
-    urlChangeEvent();
+    bindURLChangeEvent();
 
     switch (hostname) {
         case 'www.baidu.com':

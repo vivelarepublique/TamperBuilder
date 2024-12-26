@@ -53,15 +53,14 @@ function searchInput(selector: CommonSelectors) {
     });
 }
 
-export function urlChangeEvent() {
-    if (window.onurlchange === null) {
-        window.addEventListener('urlchange', () => {
-            console.log(location.search);
-            if (location.search) {
-                Object.assign(body.style, {
-                    backgroundImage: `url("")`,
-                });
-            }
-        });
-    }
+export function bindURLChangeEvent() {
+    if (window.onurlchange != null) return;
+
+    window.addEventListener('urlchange', () => {
+        if (location.search) {
+            Object.assign(body.style, {
+                backgroundImage: `url("")`,
+            });
+        }
+    });
 }
