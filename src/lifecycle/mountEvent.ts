@@ -9,40 +9,34 @@ export async function beforeMountEvent() {
     console.log(init);
     if (!init) return;
 
-    if (hostname.includes('baidu.com')) {
-        updateCssRules(/*css*/ `
-            div#s_top_wrap,
-            div#bottom_layer {
-                background-color: rgba(0, 0, 0, 0) !important;
-            }
-
-            div#s_wrap,
-            div#s-hotsearch-wrapper {
-                display: none !important;
-            }
-            `);
-    }
-
-    if (hostname.includes('bing.com')) {
-        updateCssRules(/*css*/ `
-            div.bottom_row.widget {
-                display: none !important;
-            }
-            `);
-    } else {
-        if (!location.search) {
-            updateBackgroundImage();
-            createNewURLCookieAfterMounted();
+    updateCssRules(/*css*/ `
+        /* For Baidu */
+        div#s_top_wrap,
+        div#bottom_layer {
+            background-color: rgba(0, 0, 0, 0) !important;
         }
-    }
 
-    if (hostname.includes('google.com')) {
-        updateCssRules(/*css*/ `
-            div#gb,
-            div[role="contentinfo"], input[type="submit"] {
-                background-color: rgba(0, 0, 0, 0) !important;
-            }
-            `);
+        div#s_wrap,
+        div#s-hotsearch-wrapper {
+            display: none !important;
+        }
+
+        /* For Google */
+        div#gb,
+        div[role="contentinfo"], input[type="submit"] {
+            background-color: rgba(0, 0, 0, 0) !important;
+        }
+
+        /* For Bing */
+        div.bottom_row.widget,
+        div.below_sbox {
+            display: none !important;
+        }
+        `);
+
+    if (!hostname.includes('bing.com') && !location.search) {
+        updateBackgroundImage();
+        createNewURLCookieAfterMounted();
     }
 }
 
