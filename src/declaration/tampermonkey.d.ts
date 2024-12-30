@@ -46,7 +46,7 @@ declare namespace Tampermonkey {
     type RequestEventListener<TResponse> = (this: TResponse, response: TResponse) => void;
 
     interface Request<TContext = object> {
-        method?: 'GET' | 'HEAD' | 'POST';
+        method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE';
         url: string | URL;
         headers?: RequestHeaders;
         data?: string | Blob | File | object | any[] | FormData | URLSearchParams;
