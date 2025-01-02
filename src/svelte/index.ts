@@ -1,9 +1,9 @@
+import { mount } from 'svelte';
 import App from './App.svelte';
 
 import './index.css';
 
 export function createSvelte(target: HTMLElement) {
-    return new App({
-        target,
-    });
+    const app = mount(App, { target });
+    return app;
 }
