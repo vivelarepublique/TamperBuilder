@@ -2,7 +2,7 @@ import { ref } from 'vue';
 import { defineStore } from 'pinia';
 
 export const useShowStore = defineStore('show', () => {
-    const show = ref(false);
+    const show = ref<boolean>(false);
 
     function open() {
         show.value = true;
