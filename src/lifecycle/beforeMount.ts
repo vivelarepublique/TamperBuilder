@@ -16,7 +16,7 @@ async function getBackgroundImageURLFromWeb() {
 
     const url = background?.style.backgroundImage?.match(/(?<=").+?(?=")/g)?.[0];
     const finalURL = url ? (urlRegex.test(url) ? url : `https://www.bing.com/${url}`) : '';
-    saveURLToCookie(finalURL);
+    if (finalURL) saveURLToCookie(finalURL);
     return finalURL;
 }
 
