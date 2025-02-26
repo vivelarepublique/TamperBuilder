@@ -53,6 +53,14 @@ export default defineConfig(({ command, mode }) => {
         },
         server: {
             port: 5267,
+            proxy: {
+                '/picture': {
+                    target: 'http://www.bing.com',
+                    changeOrigin: true,
+                    secure: true,
+                    rewrite: path => path.replace(/^\/picture/, ''),
+                },
+            },
         },
         build: {
             target: 'esnext',

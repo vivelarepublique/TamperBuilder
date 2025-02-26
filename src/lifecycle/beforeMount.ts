@@ -1,7 +1,7 @@
 import { httpRequest } from '../common/utils/tamperMonkeyFunction';
 import { getElement, createElementWithAttributes } from '../common/utils/elementBasic';
 import { hasCookie, setCookie, getCookie } from '../common/utils/browserCookies';
-import { body, head } from '../common/alias';
+import { body, head, hostname } from '../common/alias';
 import { urlRegex } from '../common/constant';
 
 function saveURLToCookie(url: string) {
@@ -9,13 +9,15 @@ function saveURLToCookie(url: string) {
 }
 
 async function getBackgroundImageURLFromWeb() {
-    const doc = await httpRequest({ url: 'https://www.bing.com/', method: 'GET' });
+    const baseURL = hostname === 'localhost' || hostname === '127.0.0.1' ? '/picture' : 'https://www.bing.com/';
+
+    const doc = await httpRequest({ url: baseURL, method: 'GET' });
     if (!doc) return '';
 
     const background = getElement({ tagName: 'div', className: 'img_cont' }, doc);
 
     const url = background?.style.backgroundImage?.match(/(?<=").+?(?=")/g)?.[0];
-    const finalURL = url ? (urlRegex.test(url) ? url : `https://www.bing.com/${url}`) : '';
+    const finalURL = url ? (urlRegex.test(url) ? url : `${baseURL}${url}`) : '';
     if (finalURL) saveURLToCookie(finalURL);
     return finalURL;
 }
