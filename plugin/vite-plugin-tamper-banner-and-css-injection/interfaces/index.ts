@@ -14,6 +14,12 @@ export interface ScriptInformationParameters {
     connect?: string | string[];
 }
 
+export interface VersionConfig {
+    format: 'x.y.z' | 'yyyy-MM-dd';
+    generateWay?: 'auto' | 'manual';
+    manualControlWay?: 'file' | 'date';
+}
+
 export type SecureHashAlgorithm = 'SHA-256' | 'SHA-384' | 'SHA-512';
 
 export interface PluginOption {

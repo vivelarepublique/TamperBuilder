@@ -24,7 +24,7 @@ export function bannerTemplate(code: string, details: ScriptInformationParameter
         '// ==UserScript==\n' +
         generalParameter('name', name) +
         generalParameter('namespace', namespace) +
-        generalParameter('version', version || generateNewVersionId()) +
+        generalParameter('version', version || generateNewVersionId({ format: 'x.y.z', generateWay: 'manual' })) +
         generalParameter('description', description) +
         generalParameter('author', author) +
         parameterArray(match, 'match') +
