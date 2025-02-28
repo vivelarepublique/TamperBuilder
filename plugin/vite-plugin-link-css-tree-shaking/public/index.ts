@@ -1,1 +1,1 @@
-export { uniq } from '../../../lodash-new-implementation-in-typescript/Array';
+export { uniq } from '../../../implementation/lodash/Array';
