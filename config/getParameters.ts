@@ -22,6 +22,6 @@ export const bannerConfig: ScriptInformationParameters = {
     connect,
 };
 
-const frameworkFile = fs.readFileSync('./config/framework.yaml', 'utf8');
-const framework = YAML.parse(frameworkFile);
-export const { supportedFramework } = framework as { supportedFramework: string[] };
+const pathsFile = fs.readFileSync('./config/components-files-paths.yaml', 'utf8');
+const paths = YAML.parse(pathsFile);
+export const { componentsFilesPaths } = paths as { componentsFilesPaths: string[] };

@@ -1,7 +1,0 @@
-supportedFramework:
-    - vue
-    - react
-    - preact
-    - lit
-    - svelte
-    - solid

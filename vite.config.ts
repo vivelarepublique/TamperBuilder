@@ -13,7 +13,7 @@ import tamperBannerAndCssInjection from './plugin/vite-plugin-tamper-banner-and-
 
 import { visualizer } from 'rollup-plugin-visualizer';
 
-import { bannerConfig, supportedFramework } from './config/getParameters';
+import { bannerConfig, componentsFilesPaths } from './config/getParameters';
 
 export default defineConfig(({ command, mode }) => {
     const isBuild = command === 'build';
@@ -24,8 +24,9 @@ export default defineConfig(({ command, mode }) => {
     const buildPlugins: PluginOption[] = isBuild
         ? [
               linkCssTreeShaking({
+                  // Provide the file entry manually, or provide the path to the component file
                   //   manualEntry: 'path/to/your/custom.css',
-                  componentsFilesPath: supportedFramework.map(framework => `src/${framework}/components`),
+                  componentsFilesPath: componentsFilesPaths,
                   replaceVariableDeclarations: true,
               }),
               tamperBannerAndCssInjection({

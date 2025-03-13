@@ -1,0 +1,7 @@
+componentsFilesPaths:
+    - src/vue/components
+    - src/react/components
+    - src/preact/components
+    - src/lit/components
+    - src/svelte/components
+    - src/solid/components
