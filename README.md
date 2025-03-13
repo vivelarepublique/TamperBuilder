@@ -4,6 +4,18 @@
 - No longer need to use native JavaScript or jQuery.
 - Use TypeScript with any framework you like.
 
+## Core concepts
+
+- In most cases, we use a TamperMonkey script to modify a web page to achieve 2 functions:
+
+ 1. Modify or listen to the content of the web page is already there;
+ 2. Add part of the content to extend more functionality.
+
+- If you only need implement the first function, you only need native JavaScript code to realize the function you want. Of course, if you want to refer to the current project's code, its main code is in the directory `src/common/utils`.
+
+- But if you want to add some new functionality th the page that requires adding a lot of DOM(e.g. a little button in the corner that when you click on it opens up a new interface at the top level), it's a better choice to use a JavaScript framework to create the content.
+- The above is reason why I created this code repository.
+
 ## Native JS Content
 
 - All runtime functions are written in [TypeScript](https://github.com/microsoft/TypeScript).
@@ -37,6 +49,17 @@
 git clone https://github.com/vivelarepublique/TamperBuilder
 cd TamperBuilder
 npm install
+```
+
+for development:
+
+```bash
+npm run dev
+```
+
+for build:
+
+```bash
 npm run build
 ```
 
