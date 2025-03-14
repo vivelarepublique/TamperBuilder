@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Script Test Page</title>
+        <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+        <script src="https://unpkg.com/pinia@3.0.1/dist/pinia.iife.prod.js"></script>
+    </head>
+    <body>
+        <div id="vue">
+            <div>{{ message }}</div>
+            <span>{{count}}</span>
+            <button @click="increment">+1</button>
+        </div>
+
+        <script>
+            const { createApp, ref } = Vue;
+            const { createPinia, defineStore, storeToRefs } = Pinia;
+
+            const useCounterStore = defineStore('counter', () => {
+                const count = ref(0);
+
+                function increment() {
+                    count.value++;
+                }
+
+                return { count, increment };
+            });
+
+            const app = createApp({
+                setup() {
+                    const message = ref('Hello vue!');
+                    const counterStore = useCounterStore();
+                    const { count } = storeToRefs(counterStore);
+                    const { increment } = counterStore;
+                    return {
+                        message,
+                        count,
+                        increment,
+                    };
+                },
+            });
+
+            const pinia = createPinia();
+            app.use(pinia);
+            app.mount('#vue');
+        </script>
+    </body>
+</html>

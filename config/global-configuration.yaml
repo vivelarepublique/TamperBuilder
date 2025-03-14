@@ -1,0 +1,40 @@
+- framework: vue
+  nickname: vue
+  componentsFilesPaths: src/vue/components
+  cdnURL: 'https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js'
+  subLibraries:
+    - name: pinia
+      cdnURL: 'https://unpkg.com/pinia@3.0.1/dist/pinia.iife.prod.js'
+- framework: react
+  nickname: react
+  componentsFilesPaths: src/react/components
+  cdnURL: 'https://unpkg.com/react@18.3.1/umd/react.production.min.js'
+  subLibraries:
+    - name: react-dom
+      cdnURL: 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js'
+    - name: react-redux
+      cdnURL: 'https://unpkg.com/browse/react-redux@9.2.0/dist/react-redux.browser.mjs'
+- framework: preact
+  nickname: preact
+  componentsFilesPaths: src/preact/components
+  cdnURL: 'https://unpkg.com/preact@10.26.4/dist/preact.min.umd.js'
+  subLibraries:
+    - name: '@preact/signals'
+      cdnURL: 'https://unpkg.com/@preact/signals@2.0.1/dist/signals.min.js'
+- framework: lit
+  nickname: lit
+  componentsFilesPaths: src/lit/components
+  cdnURL: 'https://cdn.jsdelivr.net/gh/lit/dist@3.2.1/all/lit-all.min.js'
+  subLibraries:
+    - name: '@lit/context'
+      cdnURL: 'https://cdn.jsdelivr.net/npm/@lit/context@1.1.4/+esm'
+- framework: svelte
+  nickname: svelte
+  componentsFilesPaths: src/svelte/components
+  cdnURL: 'https://unpkg.com/svelte@5.23.0/compiler/index.js'
+  subLibraries: []
+- framework: solid-js
+  nickname: solid
+  componentsFilesPaths: src/solid/components
+  cdnURL: 'https://cdn.jsdelivr.net/npm/solid-js@1.9.5/+esm'
+  subLibraries: []

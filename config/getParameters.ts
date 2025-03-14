@@ -5,14 +5,15 @@ import type { ScriptInformationParameters } from '../plugin/vite-plugin-tamper-b
 
 const bannerFile = fs.readFileSync('./config/banner.yaml', 'utf8');
 const banner = YAML.parse(bannerFile);
-const { name, namespace, version, description, author, match, runAt, runIn, sandbox, tag, noframes, grant, connect } = banner as ScriptInformationParameters;
+const { name, namespace, version, description, author, match, require, runAt, runIn, sandbox, tag, noframes, grant, connect } = banner as ScriptInformationParameters;
 export const bannerConfig: ScriptInformationParameters = {
     name: pkg.name || name || 'New-UserScript',
-    namespace: namespace || 'http://tampermonkey.net/',
+    namespace: namespace || 'https://www.tampermonkey.net/',
     version: (pkg.version && /[1-9]/.test(pkg.version) ? pkg.version : version) || '',
     description: pkg.description || description || 'try to take over the world!',
     author: pkg.author || author || 'You',
     match: match || ['*://*/*'],
+    require,
     runAt: runAt || 'document-idle',
     runIn,
     sandbox,
@@ -22,6 +23,17 @@ export const bannerConfig: ScriptInformationParameters = {
     connect,
 };
 
-const pathsFile = fs.readFileSync('./config/components-files-paths.yaml', 'utf8');
-const paths = YAML.parse(pathsFile);
-export const { componentsFilesPaths } = paths as { componentsFilesPaths: string[] };
+export interface GlobalConfig {
+    framework: string;
+    nickname: string;
+    componentsFilesPaths: string;
+    cdnURL: string;
+    subLibraries?: {
+        name: string;
+        cdnURL: string;
+    }[];
+}
+
+const configFile = fs.readFileSync('./config/global-configuration.yaml', 'utf8');
+const config = YAML.parse(configFile);
+export const globalConfig = config as GlobalConfig[];

@@ -8,7 +8,8 @@
         "build": "vite build",
         "build:primitive": "vite build --mode primitive",
         "build:minify": "vite build --mode minify",
-        "build:analyze": "vite build --mode analyze"
+        "build:analyze": "vite build --mode analyze",
+        "build:global": "vite build --mode global"
     },
     "keywords": [
         "react",
@@ -50,6 +51,7 @@
         "fast-xml-parser": "^4.5.3",
         "less": "^4.2.2",
         "node-fetch": "^3.3.2",
+        "rollup-plugin-external-globals": "^0.13.0",
         "rollup-plugin-visualizer": "^5.14.0",
         "sass": "^1.85.0",
         "stylus": "^0.64.0",
