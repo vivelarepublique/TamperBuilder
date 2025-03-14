@@ -6,7 +6,6 @@ import './assets/css/index.stylus';
 
 import { createVue } from './vue';
 import { createReact } from './react';
-
 import { createPreact } from './preact';
 import { createLit } from './lit';
 import { createSvelte } from './svelte';
@@ -19,17 +18,16 @@ createDivAppElement(['vue', 'react', 'preact', 'svelte', 'solid']);
 createAppElement('lit');
 const [vue, react, preact, svelte, solid] = getMultiDivAppElement(['vue', 'react', 'preact', 'svelte', 'solid']);
 
-const before = async () => await beforeMountEvent();
-const after = () => afterMountEvent();
+const begin = async () => await beforeMountEvent();
+const finish = () => afterMountEvent();
 
-before();
+begin();
 
 createVue(vue);
 createReact(react);
-
 createPreact(preact);
 createLit();
 createSvelte(svelte);
 createSolid(solid);
 
-after();
+finish();
