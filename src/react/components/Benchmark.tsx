@@ -2,17 +2,17 @@ import React, { useState } from 'react';
 
 import { measureRenderTime } from '../../common/components/benchmark';
 
-import { useDispatch, useSelector } from 'react-redux';
-import { divList, addRandomColorDiv, emptyRandomColorDiv } from '../store/benchmarkStore';
+import { useBenchmarkStore } from '../store/benchmarkStore';
 
 export default function Counter() {
-    const dispatch = useDispatch();
-    const _divList = useSelector(divList);
+    const _divList = useBenchmarkStore(state => state.divList);
+    const add = useBenchmarkStore(state => state.addRandomColorDiv);
+    const empty = useBenchmarkStore(state => state.emptyRandomColorDiv);
     const [count, setCount] = useState(0);
     const [duration, setDuration] = useState(0);
 
     function _add(count: number) {
-        dispatch(addRandomColorDiv(count));
+        add(count);
     }
 
     function _render() {
@@ -36,12 +36,12 @@ export default function Counter() {
 
                 <div className='field is-grouped'>
                     <div className='control'>
-                        <button className='button is-large button-framework-test-react' onClick={() => _render()}>
+                        <button className='button is-large button-framework-test-react' onClick={_render}>
                             Render
                         </button>
                     </div>
                     <div className='control'>
-                        <button className='button is-large button-framework-test-react' onClick={() => dispatch(emptyRandomColorDiv())}>
+                        <button className='button is-large button-framework-test-react' onClick={empty}>
                             Empty
                         </button>
                     </div>

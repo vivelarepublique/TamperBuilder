@@ -1,22 +1,13 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { RootState } from './store';
+import { create } from 'zustand';
 
-const showSlice = createSlice({
-    name: 'show',
-    initialState: {
-        value: false,
-    },
-    reducers: {
-        open: state => {
-            state.value = true;
-        },
-        close: state => {
-            state.value = false;
-        },
-    },
-});
+interface ShowState {
+    show: boolean;
+    open: () => void;
+    close: () => void;
+}
 
-export const { open, close } = showSlice.actions;
-export const show = (state: RootState) => state.show.value;
-
-export default showSlice.reducer;
+export const useShowStore = create<ShowState>(set => ({
+    show: false,
+    open: () => set({ show: true }),
+    close: () => set({ show: false }),
+}));

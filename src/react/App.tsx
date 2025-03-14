@@ -3,17 +3,16 @@ import Modal from './components/Modal';
 
 import reactLogo from '../assets/svg/react.svg';
 
-import { open, show } from './store/showStore';
-import { useDispatch, useSelector } from 'react-redux';
+import { useShowStore } from './store/showStore';
 
 import './app.css';
 
 export default function App() {
-    const dispatch = useDispatch();
-    const _show = useSelector(show);
+    const _show = useShowStore(state => state.show);
+    const _open = useShowStore(state => state.open);
     return (
         <React.Fragment>
-            <button id='framework-test-react-modal' className='button framework-test-modal-switch' onClick={() => dispatch(open())}>
+            <button id='framework-test-react-modal' className='button framework-test-modal-switch' onClick={_open}>
                 <span>More</span>
                 <img src={reactLogo} className='ft-button-logo' alt='React logo' />
             </button>

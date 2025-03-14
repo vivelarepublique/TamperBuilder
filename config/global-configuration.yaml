@@ -12,8 +12,8 @@
   subLibraries:
     - name: react-dom
       cdnURL: 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js'
-    - name: react-redux
-      cdnURL: 'https://unpkg.com/browse/react-redux@9.2.0/dist/react-redux.browser.mjs'
+    # - name: zustand
+    #   cdnURL: ''
 - framework: preact
   nickname: preact
   componentsFilesPaths: src/preact/components

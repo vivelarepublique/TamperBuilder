@@ -1,35 +1,24 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { RootState } from './store';
+import { create } from 'zustand';
+
 import type { RandomColor } from '../../common/components/benchmark';
 import { generateRandomColor } from '../../common/components/benchmark';
 
-const benchmarkSlice = createSlice({
-    name: 'benchmark',
-    initialState: {
-        value: [] as RandomColor[],
+interface BenchmarkState {
+    divList: RandomColor[];
+    emptyRandomColorDiv: () => void;
+    addRandomColorDiv: (count: number) => void;
+}
+
+export const useBenchmarkStore = create<BenchmarkState>(set => ({
+    divList: [] as RandomColor[],
+    emptyRandomColorDiv: () => set({ divList: [] }),
+    addRandomColorDiv: count => {
+        const countBefore = count > 0 ? count : 0;
+        const tempRandomColorDiv: RandomColor[] = [];
+        for (let i = 0; i < countBefore; i++) {
+            const randomColor = generateRandomColor(i);
+            tempRandomColorDiv.push(randomColor);
+        }
+        set({ divList: tempRandomColorDiv });
     },
-    reducers: {
-        emptyRandomColorDiv: _state => {
-            return {
-                value: [] as RandomColor[],
-            };
-        },
-        addRandomColorDiv: (_state, action) => {
-            const count = (action.payload > 0 ? action.payload : 0) as number;
-            const tempRandomColorDiv: RandomColor[] = [];
-            for (let i = 0; i < count; i++) {
-                const randomColor = generateRandomColor(i);
-                tempRandomColorDiv.push(randomColor);
-            }
-
-            return {
-                value: tempRandomColorDiv,
-            };
-        },
-    },
-});
-
-export const { emptyRandomColorDiv, addRandomColorDiv } = benchmarkSlice.actions;
-export const divList = (state: RootState) => state.benchmark.value;
-
-export default benchmarkSlice.reducer;
+}));

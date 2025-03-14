@@ -6,8 +6,7 @@ import Counter from './Counter';
 import WindowEvent from './WindowEvent';
 import Benchmark from './Benchmark';
 
-import { close } from '../store/showStore';
-import { useDispatch } from 'react-redux';
+import { useShowStore } from '../store/showStore';
 
 const componentsMap: Record<string, ComponentType> = {
     VectorImage,
@@ -24,23 +23,20 @@ export default function Modal(props: Props) {
     const [currentView, setCurrentView] = useState('VectorImage');
     const ComponentToRender = componentsMap[currentView];
     const { msg } = props;
-    const dispatch = useDispatch();
+    const close = useShowStore(state => state.close);
 
-    const _close = useCallback(
-        (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-            event.stopPropagation();
-            if (event.target === event.currentTarget) {
-                dispatch(close());
-            }
-        },
-        [dispatch],
-    );
+    const _close = useCallback((event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        event.stopPropagation();
+        if (event.target === event.currentTarget) {
+            close();
+        }
+    }, []);
     return (
         <Fragment>
             <div className='framework-test-modal-mask' onClick={_close}>
                 <div className='framework-test-modal-container'>
                     <span>
-                        <button className='framework-test-modal-close-button' onClick={() => dispatch(close())}>
+                        <button className='framework-test-modal-close-button' onClick={close}>
                             &times;
                         </button>
                     </span>

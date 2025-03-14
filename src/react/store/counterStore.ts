@@ -1,31 +1,19 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { RootState } from './store';
+import { create } from 'zustand';
 
-const counterSlice = createSlice({
-    name: 'counter',
-    initialState: {
-        value: 0,
-    },
-    reducers: {
-        increment: state => {
-            state.value++;
-        },
-        decrement: state => {
-            state.value--;
-        },
-        incrementByAmount: (state, action) => {
-            state.value += Number(action.payload) || 0;
-        },
-        doubleCount: state => {
-            state.value *= 2;
-        },
-        reset: state => {
-            state.value = 0;
-        },
-    },
-});
+interface CounterSate {
+    count: number;
+    increment: () => void;
+    decrement: () => void;
+    incrementByAmount: (amount: number) => void;
+    doubleCount: () => void;
+    reset: () => void;
+}
 
-export const { increment, decrement, incrementByAmount, doubleCount, reset } = counterSlice.actions;
-export const count = (state: RootState) => state.counter.value;
-
-export default counterSlice.reducer;
+export const useCounterStore = create<CounterSate>(set => ({
+    count: 0,
+    increment: () => set(state => ({ count: state.count + 1 })),
+    decrement: () => set(state => ({ count: state.count - 1 })),
+    incrementByAmount: amount => set(state => ({ count: state.count + (amount || 0) })),
+    doubleCount: () => set(state => ({ count: state.count * 2 })),
+    reset: () => set({ count: 0 }),
+}));
