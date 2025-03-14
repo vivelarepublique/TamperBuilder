@@ -64,6 +64,19 @@ for build:
 npm run build
 ```
 
+## Customization Guide
+
+After you have read and completed the steps above, if you want to build your own desired code content, modify the code in the following order.
+
+1. Modify the code in the `package.json` file content, include name, description, version, author, etc.
+2. Uninstall or install the dependencies you need in the `package.json` file.
+3. Delete the framework code directory in the `src` directory that you don't need to use. (For example, if you only use `vue`, then delete the `react`, `preact`, `lit`, `svelte`, and `solid` directories).
+4. This time delete the code in `src/index.ts` that you don't need to use.
+5. Remove parameters for frameworks not used under `config/global-configuration.yaml`.
+6. Customize the content of the `config/banner.yaml` to determine the banner of the final packaged file.
+7. Customize the parameters in `vite.config.ts` as needed while remove unnecessary imports.
+8. Done!
+
 ## Ongoing plans
 
 - [ - ] Framework support
