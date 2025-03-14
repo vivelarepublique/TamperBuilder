@@ -26,7 +26,8 @@
 ## Supported framework
 
 - [Vue](https://github.com/vuejs/vue) ( Include [Pinia](https://github.com/vuejs/pinia) )
-- [React](https://github.com/facebook/react) ( Include [Redux](https://github.com/reduxjs/redux) )
+- [React](https://github.com/facebook/react) ( Include [Zustand](https://github.com/pmndrs/zustand) )
+  > The original version was redux, but I've currently migrated to zustand, check out the [details of why](https://github.com/vivelarepublique/TamperBuilder/blob/main/documentation/about-redux.md).
 - [Preact](https://github.com/preactjs/preact) ( Include `@preact/signals`)
 - [Lit](https://github.com/lit/lit) ( Include `@lit/context` )
 - [Svelte](https://github.com/sveltejs/svelte)
@@ -66,12 +67,6 @@ npm run build
 ## Ongoing plans
 
 - [ - ] Framework support
-  - [Vue](https://github.com/vuejs/vue)✅
-  - [React](https://github.com/facebook/react)✅
-  - [Preact](https://github.com/preactjs/preact)✅
-  - [Lit](https://github.com/lit/lit)✅
-  - [Svelte](https://github.com/sveltejs/svelte)✅
-  - [Solid](https://github.com/solidjs/solid)✅
   - [Angular](https://github.com/angular/angular)
     > Compiling Angular projects can only be done with Angular's own compiler, not with Vite or Webpack, so combining Angular code with code from other projects can be a pain.
   - [Astro](https://github.com/withastro/astro)
