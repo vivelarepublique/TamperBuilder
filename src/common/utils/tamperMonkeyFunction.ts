@@ -41,7 +41,7 @@ export async function httpRequest(request: TampermonkeyWebRequestParameters): Pr
                         } else if (contentType === 'application/xml' || contentType === 'text/xml' || contentType === 'text/html') {
                             resolve(response.responseXML);
                         } else {
-                            resolve(response.responseText);
+                            resolve(response);
                         }
                     },
                     onabort: () => resolve(null),
@@ -77,7 +77,7 @@ export async function httpRequest(request: TampermonkeyWebRequestParameters): Pr
                 const xml = await response.text();
                 return new DOMParser().parseFromString(xml, 'text/html');
             } else {
-                return await response.text();
+                return response;
             }
         }
     } catch (error: any) {

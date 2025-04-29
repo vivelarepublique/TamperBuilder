@@ -64,7 +64,7 @@ export default defineConfig(({ command, mode }) => {
             open: true,
             proxy: {
                 '/picture': {
-                    target: 'https://www.bing.com',
+                    target: 'https://dailybing.com/api/v1',
                     changeOrigin: true,
                     secure: true,
                     rewrite: path => path.replace(/^\/picture/, ''),

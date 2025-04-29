@@ -1,25 +1,23 @@
 import { httpRequest } from '../common/utils/tamperMonkeyFunction';
-import { getElement, createElementWithAttributes } from '../common/utils/elementBasic';
+import { getTodayByYYYYMMDD } from '../common/utils/date';
+import { createElementWithAttributes } from '../common/utils/elementBasic';
 import { hasCookie, setCookie, getCookie } from '../common/utils/browserCookies';
-import { body, head, hostname } from '../common/alias';
-import { urlRegex } from '../common/constant';
+import { body, head, hostname, language } from '../common/alias';
 
 function saveURLToCookie(url: string) {
     setCookie('backgroundImageURL', url, { end: Infinity });
 }
 
 async function getBackgroundImageURLFromWeb() {
-    const baseURL = hostname === 'localhost' || hostname === '127.0.0.1' ? '/picture' : 'https://www.bing.com/';
+    const localFlag = hostname === 'localhost' || hostname === '127.0.0.1';
+    const baseURL = localFlag ? '/picture' : `https://dailybing.com/api/v1/${getTodayByYYYYMMDD()}${language.toLowerCase()}FHD1920`;
 
-    const doc = await httpRequest({ url: baseURL, method: 'GET' });
-    if (!doc) return '';
+    const picture = await httpRequest({ url: baseURL, method: 'GET' });
+    const url = localFlag ? picture.url : picture.finalUrl;
+    console.log(url);
 
-    const background = getElement({ tagName: 'div', className: 'img_cont' }, doc);
-
-    const url = background?.style.backgroundImage?.match(/(?<=").+?(?=")/g)?.[0];
-    const finalURL = url ? (urlRegex.test(url) ? url : `${baseURL}${url}`) : '';
-    if (finalURL) saveURLToCookie(finalURL);
-    return finalURL;
+    if (url) saveURLToCookie(url);
+    return url;
 }
 
 function getBackgroundImageFromCookie() {

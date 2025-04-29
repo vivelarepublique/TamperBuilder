@@ -10,3 +10,4 @@ export const windowWidth = window.innerWidth;
 export const windowHeight = window.innerHeight;
 
 export const userAgent = navigator.userAgent;
+export const language = navigator.language;
