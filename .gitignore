@@ -5,11 +5,6 @@ dist
 release
 temp
 
-other/*.css
-other/*.less
-other/*.sass
-other/*.stylus
-
 # Logs
 logs
 *.log
