@@ -1,4 +1,5 @@
 export interface ListenOptions {
+    strictMode?: boolean;
     anyMutation?: boolean;
     callback?: (...args: any[]) => any;
     attributesConcern?: string;

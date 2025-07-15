@@ -63,12 +63,12 @@ export default defineConfig(({ command, mode }) => {
             port: 5267,
             open: true,
             proxy: {
-                '/picture': {
-                    target: 'https://dailybing.com/api/v1',
-                    changeOrigin: true,
-                    secure: true,
-                    rewrite: path => path.replace(/^\/picture/, ''),
-                },
+                // '/picture': {
+                //     target: 'https://dailybing.com/api/v1',
+                //     changeOrigin: true,
+                //     secure: true,
+                //     rewrite: path => path.replace(/^\/picture/, ''),
+                // },
             },
         },
         build: {

@@ -6,7 +6,7 @@ import { windowProxy } from './tamperMonkeyFunction';
 import { body } from '../alias';
 
 export function listenElementChanges(selector: string | CommonSelectors, options: ListenOptions): MutationObserver {
-    const { anyMutation = false, callback = () => console.log('No action.'), attributesConcern, childrenConcern = [], immediateImplementation = false, triggerLimitation = { way: 'none', delay: 0 }, manualSetupOptions = {} } = options;
+    const { strictMode, anyMutation = false, callback = () => console.log('No action.'), attributesConcern, childrenConcern = [], immediateImplementation = false, triggerLimitation = { way: 'none', delay: 0 }, manualSetupOptions = {} } = options;
 
     if (!anyMutation && !attributesConcern && childrenConcern.length === 0) throw new Error('No action defined for the listener');
 
@@ -37,7 +37,9 @@ export function listenElementChanges(selector: string | CommonSelectors, options
 
             if (attributesConcern) {
                 const combinedSelector = typeof selector === 'string' ? selector : combineSelectors(selector);
-                const attributesMutation = mutations.find(el => (el.target as HTMLElement).matches(combinedSelector));
+                const attributesMutation = mutations.find(el => {
+                    return (el.target as HTMLElement).matches(combinedSelector) && (!strictMode || el.attributeName === attributesConcern);
+                });
                 attributesMutation && delayedCallback((attributesMutation.target as IndexedByStringElement)[attributesConcern]);
             }
         }
