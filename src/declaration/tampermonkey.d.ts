@@ -68,11 +68,17 @@ declare namespace Tampermonkey {
         password?: string;
 
         onabort?(): void;
+
         onerror?: RequestEventListener<ErrorResponse>;
+
         onloadstart?: RequestEventListener<Response<TContext>>;
+
         onprogress?: RequestEventListener<ProgressResponse<TContext>>;
+
         onreadystatechange?: RequestEventListener<Response<TContext>>;
+
         ontimeout?(): void;
+
         onload?: RequestEventListener<Response<TContext>>;
     }
 
@@ -92,15 +98,21 @@ declare namespace Tampermonkey {
         saveAs?: boolean;
         timeout?: number;
         conflictAction?: 'uniquify' | 'overwrite' | 'prompt';
+
         onerror?: RequestEventListener<DownloadErrorResponse>;
+
         ontimeout?(): void;
+
         onload?(): void;
+
         onprogress?: RequestEventListener<DownloadProgressResponse>;
     }
 
     interface AbortHandle<TReturn> {
         abort(): TReturn;
     }
+
+    type PromiseWithAbort<T> = Promise<T> & AbortHandle<void>;
 
     interface OpenTabOptions {
         active?: boolean;
@@ -111,7 +123,9 @@ declare namespace Tampermonkey {
 
     interface OpenTabObject {
         close(): void;
+
         onclose?(): void;
+
         closed: boolean;
     }
 
@@ -178,7 +192,6 @@ declare namespace Tampermonkey {
         sandbox: string | null;
         tab_types: string | null;
         unwrap: boolean | null;
-
         override: ScriptMetadataOverrides;
     }
 
@@ -215,9 +228,7 @@ declare namespace Tampermonkey {
     interface ScriptMetadata {
         antifeatures: Record<string, Record<string, string>>;
         author: string | null;
-
         blockers: string[];
-
         copyright: string | null;
         deleted?: number;
         description: string | null;
@@ -239,12 +250,9 @@ declare namespace Tampermonkey {
         name_i18n: Record<string, string> | null;
         namespace: string | null;
         options: ScriptSettings;
-
         position: number;
         resources: ScriptResource[];
-
         'run-at': string;
-
         supportURL: string | null;
         sync?: {
             imported?: number;
@@ -263,9 +271,7 @@ declare namespace Tampermonkey {
         isIncognito: boolean;
         script: ScriptMetadata;
         sandboxMode: 'js' | 'raw' | 'dom';
-
         scriptHandler: string;
-
         scriptMetaStr: string | null;
         scriptSource: string;
         scriptUpdateURL: string | null;
@@ -335,7 +341,10 @@ declare namespace Tampermonkey {
         };
     }
 
-    type ListCookiesCallback = (cookies: Cookie[], error: string | null) => void;
+    type ListCookiesCallback = (
+        cookies: Cookie[],
+        error: string | null,
+    ) => void;
 
     interface SetCookiesDetails {
         url?: string;
@@ -435,13 +444,18 @@ declare function GM_unregisterMenuCommand(menuCommandId: number): void;
 declare function GM_xmlhttpRequest<TContext = any>(details: Tampermonkey.Request<TContext>): Tampermonkey.AbortHandle<void>;
 
 declare function GM_download(details: Tampermonkey.DownloadRequest): Tampermonkey.AbortHandle<boolean>;
+
 declare function GM_download(url: string, name: string): Tampermonkey.AbortHandle<boolean>;
 
 declare function GM_saveTab(tab: object, callback?: () => void): void;
 
 declare function GM_getTab(callback: (obj: any) => void): void;
 
-declare function GM_getTabs(callback: (tabsMap: { [tabId: number]: any }) => void): void;
+declare function GM_getTabs(
+    callback: (
+        tabsMap: { [tabId: number]: any },
+    ) => void,
+): void;
 
 declare var GM_info: Tampermonkey.ScriptInfo;
 
@@ -462,7 +476,12 @@ type AtLeastOneOf<T> = { [K in keyof T]: Pick<T, K> }[keyof T];
 declare var GM_cookie: {
     list(details?: Tampermonkey.ListCookiesDetails, callback?: Tampermonkey.ListCookiesCallback): void;
 
-    set(details: Tampermonkey.SetCookiesDetails, callback?: (error?: string) => void): void;
+    set(
+        details: Tampermonkey.SetCookiesDetails,
+        callback?: (
+            error?: string,
+        ) => void,
+    ): void;
 
     delete(details: AtLeastOneOf<Tampermonkey.DeleteCookiesDetails>, callback?: (error?: string) => void): void;
 };
@@ -487,9 +506,10 @@ declare var GM: Readonly<{
     getResourceUrl(name: string): Promise<string>;
 
     registerMenuCommand(name: string, onClick: () => void, accessKey?: string): Promise<number>;
+
     unregisterMenuCommand(menuCommandId: number): Promise<void>;
 
-    xmlHttpRequest<TContext = any>(details: Tampermonkey.Request<TContext>): Promise<Tampermonkey.Response<TContext>>;
+    xmlHttpRequest<TContext = any>(details: Tampermonkey.Request<TContext>): Tampermonkey.PromiseWithAbort<Tampermonkey.Response<TContext>>;
 
     download(details: Tampermonkey.DownloadRequest): Promise<void>;
 
