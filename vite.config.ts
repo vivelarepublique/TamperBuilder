@@ -53,12 +53,6 @@ export default defineConfig(({ command, mode }) => {
         : [];
 
     return {
-        css: {
-            preprocessorOptions: {
-                less: { math: 'parens-division' },
-                sass: { api: 'modern' },
-            },
-        },
         server: {
             port: 5267,
             open: true,
