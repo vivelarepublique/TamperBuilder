@@ -4,8 +4,6 @@ import { BaseComponent } from '../extends/baseComponents';
 
 import vueLogo from '../../assets/svg/vue.svg';
 import reactLogo from '../../assets/svg/react.svg';
-import angularLogo from '../../assets/svg/angular.svg';
-import astroLogo from '../../assets/svg/astro.svg';
 
 import preactLogo from '../../assets/svg/preact.svg';
 import litLogo from '../../assets/svg/lit.svg';
@@ -29,7 +27,7 @@ export class LitVectorImage extends BaseComponent {
 
                 <div class=" box">
                     <div class="columns">
-                        <div class="column is-3">
+                        <div class="column is-6">
                             <div>
                                 <img src=${vueLogo} class="framework-test-logo" alt="Vue logo" />
                             </div>
@@ -37,28 +35,12 @@ export class LitVectorImage extends BaseComponent {
                                 <a class="framework-test-a-vue" href="https://vuejs.org" target="_blank" rel="noopener"> Vue </a>
                             </div>
                         </div>
-                        <div class="column is-3">
+                        <div class="column is-6">
                             <div>
                                 <img src=${reactLogo} class="framework-test-logo" alt="React logo" />
                             </div>
                             <div>
                                 <a class="framework-test-a-react" href="https://react.dev" target="_blank" rel="noopener"> React </a>
-                            </div>
-                        </div>
-                        <div class="column is-3">
-                            <div>
-                                <img src=${angularLogo} class="framework-test-logo" alt="Angular logo" />
-                            </div>
-                            <div>
-                                <a class="framework-test-a-angular" href="https://angular.dev" target="_blank" rel="noopener"> Angular </a>
-                            </div>
-                        </div>
-                        <div class="column is-3">
-                            <div>
-                                <img src=${astroLogo} class="framework-test-logo" alt="Astro logo" />
-                            </div>
-                            <div>
-                                <a class="framework-test-a-astro" href="https://astro.build" target="_blank" rel="noopener"> Astro </a>
                             </div>
                         </div>
                     </div>

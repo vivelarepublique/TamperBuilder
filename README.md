@@ -79,11 +79,7 @@ After you have read and completed the steps above, if you want to build your own
 
 ## Ongoing plans
 
-- [ - ] Framework support
-  - [Angular](https://github.com/angular/angular)
-    > Compiling Angular projects can only be done with Angular's own compiler, not with Vite or Webpack, so combining Angular code with code from other projects can be a pain.
-  - [Astro](https://github.com/withastro/astro)
-    > Astro is using a self-contained build tool based on Vite, so combining Astro with code from other projects isn't simple.
+- [ - ] Working: More frontend framework support
 - [ X ] Repackaged JavaScript Functions
 - [ X ] Detailed documentation
 - [ X ] Performance testing and comparison

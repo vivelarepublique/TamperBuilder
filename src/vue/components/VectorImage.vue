@@ -4,7 +4,7 @@
 
         <div class="box">
             <div class="columns">
-                <div class="column is-3">
+                <div class="column is-6">
                     <div>
                         <img src="../../assets/svg/vue.svg" class="framework-test-logo framework-test-logo-animation" alt="Vue logo" />
                     </div>
@@ -12,28 +12,12 @@
                         <a class="framework-test-a-vue" href="https://vuejs.org" target="_blank" rel="noopener">Vue</a>
                     </div>
                 </div>
-                <div class="column is-3">
+                <div class="column is-6">
                     <div>
                         <img src="../../assets/svg/react.svg" class="framework-test-logo" alt="React logo" />
                     </div>
                     <div>
                         <a class="framework-test-a-react" href="https://react.dev" target="_blank" rel="noopener">React</a>
-                    </div>
-                </div>
-                <div class="column is-3">
-                    <div>
-                        <img src="../../assets/svg/angular.svg" class="framework-test-logo" alt="Angular logo" />
-                    </div>
-                    <div>
-                        <a class="framework-test-a-angular" href="https://angular.dev" target="_blank" rel="noopener">Angular</a>
-                    </div>
-                </div>
-                <div class="column is-3">
-                    <div>
-                        <img src="../../assets/svg/astro.svg" class="framework-test-logo" alt="Astro logo" />
-                    </div>
-                    <div>
-                        <a class="framework-test-a-astro" href="https://astro.build" target="_blank" rel="noopener">Astro</a>
                     </div>
                 </div>
             </div>

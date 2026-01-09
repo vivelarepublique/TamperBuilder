@@ -6,14 +6,6 @@ a.framework-test-a-react {
     color: var(--ft-color-react);
 }
 
-a.framework-test-a-angular {
-    color: var(--ft-color-angular);
-}
-
-a.framework-test-a-astro {
-    color: var(--ft-color-astro);
-}
-
 a.framework-test-a-preact {
     color: var(--ft-color-preact);
 }
