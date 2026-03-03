@@ -48,7 +48,7 @@
         "@types/web": "^0.0.296",
         "@vitejs/plugin-react": "^5.1.1",
         "@vitejs/plugin-vue": "^6.0.2",
-        "fast-xml-parser": "^5.3.2",
+        "fast-xml-parser": "^5.4.2",
         "less": "^4.4.2",
         "node-fetch": "^3.3.2",
         "rollup-plugin-external-globals": "^0.13.0",
