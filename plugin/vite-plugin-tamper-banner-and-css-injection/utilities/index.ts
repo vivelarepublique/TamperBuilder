@@ -9,7 +9,7 @@ export { splitCssToArray } from './split';
 
 export async function cssTemplate(code: string, name: string): Promise<string> {
     const cssCode = '/*css*/`\n' + code + '`';
-    const hashSub = (await hash(code)).substring(0, 8);
+    const hashSub = hash(code).substring(0, 16);
     return /*javascript*/ `const ${name}_${hashSub} = document.createElement('style');
 const ${name}_${hashSub}_Code = document.createTextNode(${cssCode});
 ${name}_${hashSub}.appendChild(${name}_${hashSub}_Code);

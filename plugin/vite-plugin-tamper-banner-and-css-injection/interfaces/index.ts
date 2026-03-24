@@ -21,7 +21,7 @@ export interface VersionConfig {
     manualControlWay?: 'file' | 'date';
 }
 
-export type SecureHashAlgorithm = 'SHA-256' | 'SHA-384' | 'SHA-512';
+export type SecureHashAlgorithm = 'sha224' | 'sha256' | 'sha384' | 'sha512';
 
 import type { GlobalConfig } from '../../../config/getParameters';
 export type { GlobalConfig };
