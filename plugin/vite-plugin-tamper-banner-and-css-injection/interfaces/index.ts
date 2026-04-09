@@ -28,10 +28,4 @@ export type { GlobalConfig };
 export interface PluginOption {
     bannerConfig: ScriptInformationParameters;
     beautifulCss?: boolean;
-    globalImport?: ImportByCDN;
-}
-
-interface ImportByCDN {
-    importByCDN: boolean;
-    importConfig: GlobalConfig[];
 }

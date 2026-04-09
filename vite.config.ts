@@ -10,9 +10,6 @@ import solid from 'vite-plugin-solid';
 import linkCssTreeShaking from './plugin/vite-plugin-link-css-tree-shaking';
 import tamperBannerAndCssInjection from './plugin/vite-plugin-tamper-banner-and-css-injection';
 
-import externalGlobals from 'rollup-plugin-external-globals';
-import { visualizer } from 'rollup-plugin-visualizer';
-
 import { bannerConfig, globalConfig } from './config/getParameters';
 
 export default defineConfig(({ command, mode }) => {
@@ -20,9 +17,6 @@ export default defineConfig(({ command, mode }) => {
 
     const primitive = mode === 'primitive';
     const minify = mode === 'minify';
-
-    const analyze = mode === 'analyze';
-    const global = mode === 'global';
 
     const buildPlugins: PluginOption[] = isBuild
         ? [
@@ -35,21 +29,8 @@ export default defineConfig(({ command, mode }) => {
               tamperBannerAndCssInjection({
                   beautifulCss: true,
                   bannerConfig,
-                  globalImport: {
-                      importByCDN: global,
-                      importConfig: globalConfig,
-                  },
               }),
-          ].concat(
-              analyze
-                  ? [
-                        visualizer({
-                            emitFile: true,
-                            filename: 'stats.html',
-                        }),
-                    ]
-                  : [],
-          )
+          ]
         : [];
 
     return {
@@ -79,17 +60,6 @@ export default defineConfig(({ command, mode }) => {
             rollupOptions: {
                 input: './src/index.ts',
                 output: { entryFileNames: `${bannerConfig.name}.user.js` },
-
-                //Only Vue is supported in framework, or other 3rd-party libraries that support UMD or IIFE export
-                external: global ? ['vue', 'pinia'] : [],
-                plugins: global
-                    ? [
-                          externalGlobals({
-                              vue: 'Vue',
-                              pinia: 'Pinia',
-                          }),
-                      ]
-                    : [],
             },
         },
         plugins: [

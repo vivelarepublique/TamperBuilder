@@ -27,11 +27,6 @@ export interface GlobalConfig {
     framework: string;
     nickname: string;
     componentsFilesPaths: string;
-    cdnURL: string;
-    subLibraries?: {
-        name: string;
-        cdnURL: string;
-    }[];
 }
 
 const configFile = fs.readFileSync('./config/global-configuration.yaml', 'utf8');
