@@ -14,5 +14,5 @@
         "target": "ESNext",
         "useDefineForClassFields": true
     },
-    "include": ["implementation/**/*.ts", "plugin/**/*.ts", "config/**/*.ts", "vite.config.ts"]
+    "include": ["utils/**/*.ts", "plugin/**/*.ts", "config/**/*.ts", "vite.config.ts"]
 }

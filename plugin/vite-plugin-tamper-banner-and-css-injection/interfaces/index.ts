@@ -23,8 +23,6 @@ export interface VersionConfig {
 
 export type SecureHashAlgorithm = 'sha224' | 'sha256' | 'sha384' | 'sha512';
 
-import type { GlobalConfig } from '../../../config/getParameters';
-export type { GlobalConfig };
 export interface PluginOption {
     bannerConfig: ScriptInformationParameters;
     beautifulCss?: boolean;

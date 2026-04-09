@@ -23,7 +23,7 @@ export const bannerConfig: ScriptInformationParameters = {
     connect,
 };
 
-export interface GlobalConfig {
+interface GlobalConfig {
     framework: string;
     nickname: string;
     componentsFilesPaths: string;

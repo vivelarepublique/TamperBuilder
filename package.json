@@ -7,8 +7,7 @@
         "dev": "vite",
         "build": "vite build",
         "build:primitive": "vite build --mode primitive",
-        "build:minify": "vite build --mode minify",
-        "pickcolor": "ts-node script/svg-color-extractor.ts src/assets/svg src/assets/css/root.css"
+        "build:minify": "vite build --mode minify"
     },
     "keywords": [
         "react",
@@ -53,9 +52,8 @@
         "stylus": "^0.64.0",
         "svelte": "^5.55.2",
         "terser": "^5.46.1",
-        "ts-node": "^10.9.2",
         "typescript": "~5.9.3",
-        "vite": "^7.3.2",
+        "vite": "~7.3.2",
         "vite-plugin-solid": "^2.11.12",
         "yaml": "^2.8.3"
     }

@@ -4,6 +4,7 @@ cache
 dist
 release
 temp
+test
 
 # Logs
 logs

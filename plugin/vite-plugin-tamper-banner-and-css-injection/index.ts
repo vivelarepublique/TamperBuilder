@@ -4,8 +4,8 @@ import type { PluginOption } from './interfaces';
 export type { ScriptInformationParameters } from './interfaces';
 
 export default function tamperBannerAndCssInjectionPlugin(config: PluginOption): Plugin {
-    const { bannerConfig, beautifulCss, globalImport } = config;
-    const { importByCDN, importConfig } = globalImport || {};
+    const { bannerConfig, beautifulCss } = config;
+
     return {
         name: 'vite-plugin-tamper-banner-and-css-injection',
         apply: 'build',
@@ -23,7 +23,7 @@ export default function tamperBannerAndCssInjectionPlugin(config: PluginOption):
             }, '');
 
             const cssCode = allCss.length === 0 ? '' : await cssTemplate(beautifulCss ? splitCssToArray(allCss).join('\n') : allCss, 'tamperTemplateInjection');
-            const banner = bannerTemplate(entry.code, bannerConfig, importByCDN ? importConfig : undefined);
+            const banner = bannerTemplate(entry.code, bannerConfig);
             entry.code = jsTemplate(banner, cssCode, entry.code);
         },
     };
