@@ -57,7 +57,7 @@ export default defineConfig(({ command, mode }) => {
                 mangle: !primitive,
                 format: { beautify: !minify },
             },
-            rollupOptions: {
+            rolldownOptions: {
                 input: './src/index.ts',
                 output: { entryFileNames: `${bannerConfig.name}.user.js` },
             },

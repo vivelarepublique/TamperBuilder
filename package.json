@@ -37,7 +37,7 @@
     },
     "devDependencies": {
         "@preact/preset-vite": "^2.10.5",
-        "@sveltejs/vite-plugin-svelte": "^6.2.4",
+        "@sveltejs/vite-plugin-svelte": "^7.1.1",
         "@types/node": "^22.19.17",
         "@types/react": "^19.2.14",
         "@types/react-dom": "^19.2.3",
@@ -45,15 +45,15 @@
         "@types/web": "^0.0.345",
         "@vitejs/plugin-react": "^5.2.0",
         "@vitejs/plugin-vue": "^6.0.5",
-        "fast-xml-parser": "^5.5.11",
+        "fast-xml-parser": "^5.7.3",
         "less": "^4.6.4",
         "node-fetch": "^3.3.2",
         "sass": "^1.99.0",
         "stylus": "^0.64.0",
-        "svelte": "^5.55.2",
+        "svelte": "^5.55.5",
         "terser": "^5.46.1",
-        "typescript": "~5.9.3",
-        "vite": "~7.3.2",
+        "typescript": "^6.0.3",
+        "vite": "^8.0.11",
         "vite-plugin-solid": "^2.11.12",
         "yaml": "^2.8.3"
     }
