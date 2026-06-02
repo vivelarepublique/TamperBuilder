@@ -6,8 +6,8 @@ export const hostname = location.hostname;
 export const pathname = location.pathname;
 export const search = location.search;
 
-export const windowWidth = window.innerWidth;
-export const windowHeight = window.innerHeight;
+export const windowWidth = () => window.innerWidth;
+export const windowHeight = () => window.innerHeight;
 
 export const userAgent = navigator.userAgent;
 export const language = navigator.language;

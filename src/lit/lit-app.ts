@@ -1,5 +1,5 @@
 import { css, html, nothing } from 'lit';
-import { customElement } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import { BaseComponent } from './extends/baseComponents';
 
 import litLogo from '../assets/svg/lit.svg';
@@ -22,6 +22,9 @@ export class LitApp extends BaseComponent {
     @provide({ context: benchmarkContext })
     benchmarkStore: BenchmarkStore = new BenchmarkStore();
 
+    @property({ type: Boolean })
+    _focus = false;
+
     _open() {
         this.showStore.open();
         this.requestUpdate();
@@ -36,8 +39,8 @@ export class LitApp extends BaseComponent {
 
     render() {
         return html`
-            <button id="framework-test-lit-modal" class="button framework-test-modal-switch" @click=${this._open} part="button">
-                <span>More</span>
+            <button id="framework-test-lit-modal" class="button framework-test-modal-switch" @click=${this._open} @mouseover=${() => (this._focus = true)} @mouseout=${() => (this._focus = false)} part="button">
+                ${this._focus ? html`<span>More</span>` : nothing}
                 <img src=${litLogo} class="ft-button-logo" alt="Lit logo" />
             </button>
             ${this.showStore.show ? html`<lit-modal @show-changed=${this.handleShowChanged} .msg="${'Welcome Lit'}"></lit-modal>` : nothing}

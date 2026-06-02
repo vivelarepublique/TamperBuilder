@@ -4,18 +4,18 @@
     top: 0;
     left: 0;
     animation: anime-left-framework-test 0.25s;
-    padding: 10px 20px;
-    margin: 5px 10px;
     border: none !important;
     color: white !important;
     font-weight: bold !important;
     border-radius: 10px !important;
     cursor: pointer !important;
-    min-width: 120px !important;
-    min-height: 40px !important;
-    max-width: 160px !important;
-    max-width: 60px !important;
     font-size: medium !important;
+}
+
+.framework-test-modal-switch:hover {
+    margin: 5px 10px;
+    padding: 10px 20px;
+    transition: all 0.25s;
 }
 
 .ft-button-logo {
