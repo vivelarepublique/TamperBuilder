@@ -7,7 +7,7 @@
 </script>
 
 <main>
-    <button id="framework-test-svelte-modal" class="button framework-test-modal-switch" on:click={() => open()} on:mouseenter={() => focus = true} on:mouseleave={() => focus = false}>
+    <button id="framework-test-svelte-modal" class="button framework-test-modal-switch" onclick={() => open()} onmouseenter={() => focus = true} onmouseleave={() => focus = false}>
         {#if focus}
             <span>More</span>
         {/if}
