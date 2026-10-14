@@ -44,11 +44,10 @@ export function bannerTemplate(code: string, details: ScriptInformationParameter
 }
 
 export function jsTemplate(banner: string, css: string, code: string) {
-    const codeWithoutComments = code.replace(/(\/\*[\s\S]*?\*\/)/g, '');
     return /*javascript*/ `${banner}
 (function () {
 'use strict';
 ${css}
-${codeWithoutComments}
+${code}
 })();`;
 }

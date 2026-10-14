@@ -75,6 +75,19 @@ describe('cssTemplate', () => {
         }
     });
 
+    it('preserves comment-like strings in generated bundle code', () => {
+        const bundleCode = `const normalize = value => value.startsWith("/*")
+            ? value.replace(/\\/\\*[\\s\\S]*?\\*\\//g, "").trim()
+            : value;
+        globalThis.__bundleProbe = normalize("/* comment */safe");`;
+        const generatedCode = jsTemplate('', '', bundleCode);
+        const context = { __bundleProbe: '' };
+
+        expect(() => new Script(generatedCode).runInNewContext(context)).not.toThrow();
+        expect(context.__bundleProbe).toBe('safe');
+        expect(generatedCode).toContain('value.startsWith("/*")');
+    });
+
     it('appends one style element with exact normal CSS text', async () => {
         const css = readFileSync(path.join(fixturesDirectory, 'local.min.css'), 'utf8');
         const { styles } = executeCssInjection(await cssTemplate(css, 'injectedStyle'));
