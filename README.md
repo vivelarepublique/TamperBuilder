@@ -33,6 +33,8 @@
 - [Svelte](https://github.com/sveltejs/svelte)
 - [Solid](https://github.com/solidjs/solid)
 
+The default `config/global-configuration.yaml` deliberately selects all six frameworks as a showcase.
+
 ## Building Tool
 
 - [Vite](https://github.com/vitejs/vite)
@@ -49,10 +51,10 @@
 ```bash
 git clone https://github.com/vivelarepublique/TamperBuilder
 cd TamperBuilder
-npm install
+npm ci
 ```
 
-for development:
+for development (the server binds only to `127.0.0.1`):
 
 ```bash
 npm run dev
@@ -64,18 +66,53 @@ for build:
 npm run build
 ```
 
+Run the complete local quality gate with:
+
+```bash
+npm run check
+```
+
+This audits dependencies, type-checks the project, runs unit tests, verifies framework selection with real builds, and checks all three supported build modes. A successful Vite build proves only generated-file and module-graph contracts; it does not prove behavior in a browser or Tampermonkey.
+
+## Explicit userscript permissions
+
+`config/banner.yaml` is the only authority for generated `@grant` and `@connect` metadata. The default sample explicitly declares exactly the APIs and host it currently uses:
+
+```yaml
+grant:
+    - GM_xmlhttpRequest
+    - unsafeWindow
+connect:
+    - dailybing.com
+```
+
+Grants must be from the project's approved list, and connect entries must be explicit hostnames. Wildcards, URL schemes, paths, ports, inferred bundle references, `window.onurlchange`, and framework documentation hosts are rejected or ignored rather than added automatically.
+
+## Framework selection
+
+Select one or more frameworks in `config/global-configuration.yaml`. Each record needs a supported, unique framework name, a unique DOM nickname, and an existing component directory. For example, a Vue-only build uses:
+
+```yaml
+- framework: vue
+  nickname: vue
+  componentsFilesPaths: src/vue/components
+```
+
+The generated virtual entry statically imports only selected application sources. Vite loads only selected framework transforms, and the build fails if an unselected framework source or runtime enters the application module graph. Lit does not require a framework Vite plugin. Do not delete unselected source directories or manually edit `src/index.ts`; selection is controlled by validated YAML.
+
+You can verify the default six-framework showcase and the Vue-only fixture with:
+
+```bash
+npm run verify:frameworks
+```
+
 ## Customization Guide
 
-After you have read and completed the steps above, if you want to build your own desired code content, modify the code in the following order.
-
-1. Modify the code in the `package.json` file content, include name, description, version, author, etc.
-2. Uninstall or install the dependencies you need in the `package.json` file.
-3. Delete the framework code directory in the `src` directory that you don't need to use. (For example, if you only use `vue`, then delete the `react`, `preact`, `lit`, `svelte`, and `solid` directories).
-4. This time delete the code in `src/index.ts` that you don't need to use.
-5. Remove parameters for frameworks not used under `config/global-configuration.yaml`.
-6. Customize the content of the `config/banner.yaml` to determine the banner of the final packaged file.
-7. Customize the parameters in `vite.config.ts` as needed while remove unnecessary imports.
-8. Done!
+1. Modify project metadata such as name, description, version, and author in `package.json` and `config/banner.yaml`.
+2. Select framework records in `config/global-configuration.yaml`.
+3. Declare required userscript permissions explicitly in `config/banner.yaml`.
+4. Customize selected framework components and shared utilities under `src`.
+5. Run `npm run check` before using the generated userscript.
 
 ## Ongoing plans
 

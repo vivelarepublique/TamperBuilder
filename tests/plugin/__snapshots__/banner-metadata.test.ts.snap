@@ -1,0 +1,20 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`userscript metadata > renders only explicitly validated grants and connect hosts 1`] = `
+"// ==UserScript==
+// @name         tamper-builder
+// @namespace    https://tampermonkey.net/
+// @version      0.0.0
+// @description  A Vite-powered Tampermonkey userscript example using Vue, React, Preact, Lit, Svelte, and Solid.
+// @author       vivelarepublique
+// @match        https://www.baidu.com/*
+// @match        https://www.bing.com/*
+// @match        https://www.google.com/*
+// @run-at       document-idle
+// @noframes
+// @grant        GM_xmlhttpRequest
+// @grant        unsafeWindow
+// @connect      dailybing.com
+// ==/UserScript==
+"
+`;

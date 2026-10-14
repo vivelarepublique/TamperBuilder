@@ -1,5 +1,6 @@
 name: tamper-builder
-namespace: http://tampermonkey.net/
+namespace: https://tampermonkey.net/
+version: 0.0.0
 description: try to take over the world!
 author: vivelarepublique
 runAt: document-idle
@@ -8,7 +9,8 @@ match:
     - https://www.baidu.com/*
     - https://www.bing.com/*
     - https://www.google.com/*
-# grant:
-#     - GM_xmlhttpRequest
-#     - unsafeWindow
-# connect: '*'
+grant:
+    - GM_xmlhttpRequest
+    - unsafeWindow
+connect:
+    - dailybing.com

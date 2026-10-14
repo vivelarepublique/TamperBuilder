@@ -11,8 +11,9 @@
         "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.react.json && tsc --noEmit -p tsconfig.preact.json && tsc --noEmit -p tsconfig.lit.json && tsc --noEmit -p tsconfig.solid.json && tsc --noEmit -p tsconfig.node.json && vue-tsc --noEmit -p tsconfig.vue.json && svelte-check --tsconfig ./tsconfig.svelte.json",
         "test": "vitest run",
         "verify:output": "node scripts/verify-build-output.mjs",
+        "verify:frameworks": "node scripts/verify-framework-selection.mjs",
         "verify:builds": "npm run build && npm run verify:output && npm run build:primitive && npm run verify:output && npm run build:minify && npm run verify:output",
-        "check": "npm audit --audit-level=high && npm run typecheck && npm test && npm run verify:builds"
+        "check": "npm audit --audit-level=high && npm run typecheck && npm test && npm run verify:frameworks && npm run verify:builds"
     },
     "keywords": [
         "react",

@@ -1,7 +1,6 @@
 import { uniq } from '../public';
 import { hash } from './crypto';
 import { generalParameter, optionalParameter, parameterArray } from './parameter';
-import { countAllUniqueHostnames, countAllUniqueGrants } from './count';
 import { generateNewVersionId } from './id';
 import type { ScriptInformationParameters } from '../interfaces';
 
@@ -16,12 +15,12 @@ ${name}_${hashSub}.appendChild(${name}_${hashSub}_Code);
 document.head.appendChild(${name}_${hashSub});`;
 }
 
-export function bannerTemplate(code: string, details: ScriptInformationParameters) {
+export function bannerTemplate(details: ScriptInformationParameters) {
     const { name, namespace, version, description, author, match, require, runAt, runIn, sandbox, tag, noframes, grant, connect } = details;
 
     const requires = require ? (Array.isArray(require) ? uniq(require) : [require]) : [];
-    const grants = grant ? uniq(countAllUniqueGrants(code).concat(grant)) : countAllUniqueGrants(code);
-    const connects = connect ? (connect === '*' ? ['*'] : uniq(countAllUniqueHostnames(code).concat(connect))) : countAllUniqueHostnames(code);
+    const grants = grant ? uniq(grant) : [];
+    const connects = connect ? uniq(Array.isArray(connect) ? connect : [connect]) : [];
 
     return (
         '// ==UserScript==\n' +

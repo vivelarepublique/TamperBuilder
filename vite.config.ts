@@ -1,29 +1,64 @@
-import { defineConfig } from 'vite';
-import type { PluginOption } from 'vite';
-
-import vue from '@vitejs/plugin-vue';
-import react from '@vitejs/plugin-react';
-import preact from '@preact/preset-vite';
-import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-import solid from 'vite-plugin-solid';
+import path from 'node:path';
+import type { ConfigEnv, PluginOption, UserConfig } from 'vite';
 
 import linkCssTreeShaking from './plugin/vite-plugin-link-css-tree-shaking';
 import tamperBannerAndCssInjection from './plugin/vite-plugin-tamper-banner-and-css-injection';
+import frameworkEntry, { FRAMEWORK_ENTRY_ID } from './plugin/vite-plugin-framework-entry';
+import { getProjectRoot, loadBannerConfig, loadFrameworkConfig } from './config/getParameters';
+import type { FrameworkConfiguration } from './config/getParameters';
 
-import { bannerConfig, globalConfig } from './config/getParameters';
+async function loadSelectedFrameworkPlugins(frameworks: FrameworkConfiguration[]): Promise<PluginOption[]> {
+    const plugins: PluginOption[] = [];
+    for (const { framework } of frameworks) {
+        switch (framework) {
+            case 'vue': {
+                const { default: vue } = await import('@vitejs/plugin-vue');
+                plugins.push(vue());
+                break;
+            }
+            case 'react': {
+                const { default: react } = await import('@vitejs/plugin-react');
+                plugins.push(react({ include: ['src/react/**/*.{tsx,ts,jsx,js}'] }));
+                break;
+            }
+            case 'preact': {
+                const { default: preact } = await import('@preact/preset-vite');
+                plugins.push(preact({ include: ['src/preact/**/*.{tsx,ts,jsx,js}'] }));
+                break;
+            }
+            case 'svelte': {
+                const { svelte, vitePreprocess } = await import('@sveltejs/vite-plugin-svelte');
+                plugins.push(svelte({ preprocess: vitePreprocess() }));
+                break;
+            }
+            case 'solid-js': {
+                const { default: solid } = await import('vite-plugin-solid');
+                plugins.push(solid({ include: ['src/solid/**/*.{tsx,ts,jsx,js}'] }));
+                break;
+            }
+            case 'lit':
+                break;
+        }
+    }
+    return plugins;
+}
 
-export default defineConfig(({ command, mode }) => {
+export default async function configure({ command, mode }: ConfigEnv): Promise<UserConfig> {
+    const rootDirectory = getProjectRoot();
+    const bannerConfig = loadBannerConfig({ rootDirectory });
+    const globalConfig = loadFrameworkConfig({
+        rootDirectory,
+        frameworkPath: process.env.TAMPER_BUILDER_FRAMEWORK_CONFIG,
+    });
     const isBuild = command === 'build';
-
     const primitive = mode === 'primitive';
     const minify = mode === 'minify';
+    const selectedFrameworkPlugins = await loadSelectedFrameworkPlugins(globalConfig);
 
     const buildPlugins: PluginOption[] = isBuild
         ? [
               linkCssTreeShaking({
-                  // Provide the file entry manually, or provide the path to the component file
-                  //   manualEntry: 'path/to/your/custom.css',
-                  componentsFilesPath: globalConfig.map(config => config.componentsFilesPaths),
+                  componentsFilesPath: globalConfig.map(config => path.resolve(rootDirectory, config.componentsFilesPaths)),
                   replaceVariableDeclarations: true,
               }),
               tamperBannerAndCssInjection({
@@ -34,17 +69,12 @@ export default defineConfig(({ command, mode }) => {
         : [];
 
     return {
+        root: rootDirectory,
         server: {
+            host: '127.0.0.1',
             port: 5267,
             open: true,
-            proxy: {
-                // '/picture': {
-                //     target: 'https://dailybing.com/api/v1',
-                //     changeOrigin: true,
-                //     secure: true,
-                //     rewrite: path => path.replace(/^\/picture/, ''),
-                // },
-            },
+            proxy: {},
         },
         build: {
             target: 'esnext',
@@ -58,25 +88,17 @@ export default defineConfig(({ command, mode }) => {
                 format: { beautify: !minify },
             },
             rolldownOptions: {
-                input: './src/index.ts',
+                input: FRAMEWORK_ENTRY_ID,
                 output: { entryFileNames: `${bannerConfig.name}.user.js` },
             },
         },
         plugins: [
-            vue(),
-            react({
-                include: ['src/react/**/*.{tsx,ts,jsx,js}'],
+            frameworkEntry({
+                frameworks: globalConfig,
+                moduleGraphReportPath: process.env.TAMPER_BUILDER_MODULE_REPORT,
             }),
-            preact({
-                include: ['src/preact/**/*.{tsx,ts,jsx,js}'],
-            }),
-            svelte({
-                preprocess: vitePreprocess(),
-            }),
-            solid({
-                include: ['src/solid/**/*.{tsx,ts,jsx,js}'],
-            }),
+            ...selectedFrameworkPlugins,
             ...buildPlugins,
         ],
     };
-});
+}

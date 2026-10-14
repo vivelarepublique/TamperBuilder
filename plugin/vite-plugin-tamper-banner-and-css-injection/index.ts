@@ -24,7 +24,7 @@ export default function tamperBannerAndCssInjectionPlugin(config: PluginOption):
             }, '');
 
             const cssCode = allCss.length === 0 ? '' : await cssTemplate(beautifulCss ? splitCssToArray(allCss).join('\n') : allCss, 'tamperTemplateInjection');
-            const banner = bannerTemplate(entry.code, bannerConfig);
+            const banner = bannerTemplate(bannerConfig);
             entry.code = jsTemplate(banner, cssCode, entry.code);
 
             try {
