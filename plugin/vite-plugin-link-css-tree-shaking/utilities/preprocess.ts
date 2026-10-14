@@ -3,29 +3,41 @@ import fetch from 'node-fetch';
 import { isMinCssAndExists } from './judgement';
 import { removeCommentsAndCharset } from './replace';
 
+function processCssContent(content: string, source: string): string {
+    const processedContent = removeCommentsAndCharset(content);
+    if (processedContent.trim().length === 0) {
+        throw new Error(`CSS resource is empty: ${source}`);
+    }
+    return processedContent;
+}
+
 export function readLocalFile(filePath: string | string[]): string {
     if (Array.isArray(filePath)) {
         return filePath.reduce((previous, current) => {
-            if (!isMinCssAndExists(current)) return previous;
+            if (!isMinCssAndExists(current)) {
+                throw new Error(`Local CSS resource is missing or not a .min.css file: ${current}`);
+            }
             const content = fs.readFileSync(current, 'utf-8');
-            return previous + removeCommentsAndCharset(content);
+            return previous + processCssContent(content, current);
         }, '');
-    } else {
-        if (!isMinCssAndExists(filePath)) return '';
-        const content = fs.readFileSync(filePath, 'utf-8');
-        return removeCommentsAndCharset(content);
     }
+
+    if (!isMinCssAndExists(filePath)) {
+        throw new Error(`Local CSS resource is missing or not a .min.css file: ${filePath}`);
+    }
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return processCssContent(content, filePath);
 }
 
 export async function readRemoteResource(url: string): Promise<string> {
     const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Unable to load remote CSS resource ${url}: HTTP ${response.status}`);
+    }
     if (!response.url.endsWith('.min.css')) {
         throw new Error(`Remote resource is not a minified CSS file: ${url}`);
     }
-    if (response.ok && response.status === 200) {
-        const content = await response.text();
-        return removeCommentsAndCharset(content);
-    } else {
-        return '';
-    }
+
+    const content = await response.text();
+    return processCssContent(content, url);
 }

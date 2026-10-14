@@ -1,3 +1,4 @@
+import { Script } from 'node:vm';
 import { Rollup, type Plugin } from 'vite';
 import { cssTemplate, bannerTemplate, jsTemplate, splitCssToArray } from './utilities';
 import type { PluginOption } from './interfaces';
@@ -25,6 +26,12 @@ export default function tamperBannerAndCssInjectionPlugin(config: PluginOption):
             const cssCode = allCss.length === 0 ? '' : await cssTemplate(beautifulCss ? splitCssToArray(allCss).join('\n') : allCss, 'tamperTemplateInjection');
             const banner = bannerTemplate(entry.code, bannerConfig);
             entry.code = jsTemplate(banner, cssCode, entry.code);
+
+            try {
+                new Script(entry.code, { filename: entry.fileName });
+            } catch (error) {
+                throw new Error(`Generated userscript ${entry.fileName} contains invalid JavaScript`, { cause: error });
+            }
         },
     };
 }

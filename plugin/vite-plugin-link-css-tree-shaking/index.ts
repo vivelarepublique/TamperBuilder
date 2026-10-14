@@ -9,23 +9,19 @@ export default function linkCssTreeShakingPlugin(config: TreeShakingOptions): Pl
         apply: 'build',
         enforce: 'post',
         async generateBundle(_options, _bundle) {
-            try {
-                const minLinkCss = await treeShaking({
-                    manualEntry,
-                    componentsFilesPath,
-                    excludeTags: excludeTags || ['main', 'style', 'link', 'script', 'number', 'string', 'boolean', 'component', 'template', 'symbol', 'function', 'object', 'undefined'],
-                    excludeClassNameKeywords: excludeClassNameKeywords || 'framework-test',
-                    replaceVariableDeclarations: replaceVariableDeclarations || false,
-                });
+            const minLinkCss = await treeShaking({
+                manualEntry,
+                componentsFilesPath,
+                excludeTags: excludeTags || ['main', 'style', 'link', 'script', 'number', 'string', 'boolean', 'component', 'template', 'symbol', 'function', 'object', 'undefined'],
+                excludeClassNameKeywords: excludeClassNameKeywords || 'framework-test',
+                replaceVariableDeclarations: replaceVariableDeclarations || false,
+            });
 
-                this.emitFile({
-                    fileName: 'z-last.css',
-                    type: 'asset',
-                    source: minLinkCss.join(''),
-                });
-            } catch (error) {
-                console.log(`Plugin [vite-plugin-link-css-tree-shaking] Error: ${error}`);
-            }
+            this.emitFile({
+                fileName: 'z-last.css',
+                type: 'asset',
+                source: minLinkCss.join(''),
+            });
         },
     };
 }

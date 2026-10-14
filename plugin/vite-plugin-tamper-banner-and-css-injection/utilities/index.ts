@@ -8,7 +8,7 @@ import type { ScriptInformationParameters } from '../interfaces';
 export { splitCssToArray } from './split';
 
 export async function cssTemplate(code: string, name: string): Promise<string> {
-    const cssCode = '/*css*/`\n' + code + '`';
+    const cssCode = JSON.stringify(code).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
     const hashSub = hash(code).substring(0, 16);
     return /*javascript*/ `const ${name}_${hashSub} = document.createElement('style');
 const ${name}_${hashSub}_Code = document.createTextNode(${cssCode});

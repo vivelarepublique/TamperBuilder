@@ -1,0 +1,3 @@
+body::before {
+    content: "` ${globalThis.__cssProbe = true} \ line separator paragraph </style>";
+}
