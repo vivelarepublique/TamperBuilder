@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import type { Plugin } from 'vite';
-import type { FrameworkConfiguration, SupportedFramework } from '../../config/getParameters';
+import type { FrameworkConfiguration, SupportedFramework } from '../../config/getParameters.ts';
 
 export const FRAMEWORK_ENTRY_ID = 'virtual:tamper-builder-framework-entry';
 const resolvedFrameworkEntryId = `\0${FRAMEWORK_ENTRY_ID}`;

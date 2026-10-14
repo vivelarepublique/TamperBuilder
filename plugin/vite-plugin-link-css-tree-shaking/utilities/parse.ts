@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
-import { isURL } from './judgement';
-import { readLocalFile, readRemoteResource } from './preprocess';
-import { createCache, getCache, existsCache, pickupCacheName } from './cache';
-import type { HTMLStructure } from '../interfaces';
+import { isURL } from './judgement.ts';
+import { readLocalFile, readRemoteResource } from './preprocess.ts';
+import { createCache, getCache, existsCache, pickupCacheName } from './cache.ts';
+import type { HTMLStructure } from '../interfaces/index.ts';
 
 const unpairedTags = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
 

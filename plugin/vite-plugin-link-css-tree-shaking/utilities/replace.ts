@@ -1,4 +1,4 @@
-import type { KeyAndValueObject } from '../interfaces';
+import type { KeyAndValueObject } from '../interfaces/index.ts';
 
 export function removeCommentsAndCharset(content: string): string {
     return content.replaceAll(/(@charset "UTF-8";)|(\/\*[\s\S]*?\*\/)/g, '');

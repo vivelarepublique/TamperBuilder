@@ -1,6 +1,6 @@
-import { simplifySelector } from './replace';
-import { splitKeyAndValueToArray } from './split';
-import type { KeyAndValueObject, CssRuleObjectArrayBasic, CssRuleObjectArray, FiltrationCondition } from '../interfaces';
+import { simplifySelector } from './replace.ts';
+import { splitKeyAndValueToArray } from './split.ts';
+import type { KeyAndValueObject, CssRuleObjectArrayBasic, CssRuleObjectArray, FiltrationCondition } from '../interfaces/index.ts';
 
 function classSelectorFilter(selectors: string[], target: string, classes: string[], tags: string[]): boolean {
     return selectors

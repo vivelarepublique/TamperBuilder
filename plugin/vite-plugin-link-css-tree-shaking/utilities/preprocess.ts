@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import fetch from 'node-fetch';
-import { isMinCssAndExists } from './judgement';
-import { removeCommentsAndCharset } from './replace';
+import { isMinCssAndExists } from './judgement.ts';
+import { removeCommentsAndCharset } from './replace.ts';
 
 function processCssContent(content: string, source: string): string {
     const processedContent = removeCommentsAndCharset(content);

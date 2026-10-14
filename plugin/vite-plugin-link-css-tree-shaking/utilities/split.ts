@@ -1,4 +1,4 @@
-import type { KeyAndValueObject, CssRuleObject, CssRuleObjectArrayBasic, CssRuleObjectArray } from '../interfaces';
+import type { KeyAndValueObject, CssRuleObject, CssRuleObjectArrayBasic, CssRuleObjectArray } from '../interfaces/index.ts';
 
 function splitKeyAndValue(sentence: string): KeyAndValueObject {
     const [key, value] = sentence.split(':');

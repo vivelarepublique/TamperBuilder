@@ -1,11 +1,11 @@
 import path from 'node:path';
 import type { ConfigEnv, PluginOption, UserConfig } from 'vite';
 
-import linkCssTreeShaking from './plugin/vite-plugin-link-css-tree-shaking';
-import tamperBannerAndCssInjection from './plugin/vite-plugin-tamper-banner-and-css-injection';
-import frameworkEntry, { FRAMEWORK_ENTRY_ID } from './plugin/vite-plugin-framework-entry';
-import { getProjectRoot, loadBannerConfig, loadFrameworkConfig } from './config/getParameters';
-import type { FrameworkConfiguration } from './config/getParameters';
+import linkCssTreeShaking from './plugin/vite-plugin-link-css-tree-shaking/index.ts';
+import tamperBannerAndCssInjection from './plugin/vite-plugin-tamper-banner-and-css-injection/index.ts';
+import frameworkEntry, { FRAMEWORK_ENTRY_ID } from './plugin/vite-plugin-framework-entry/index.ts';
+import { getProjectRoot, loadBannerConfig, loadFrameworkConfig } from './config/getParameters.ts';
+import type { FrameworkConfiguration } from './config/getParameters.ts';
 
 async function loadSelectedFrameworkPlugins(frameworks: FrameworkConfiguration[]): Promise<PluginOption[]> {
     const plugins: PluginOption[] = [];

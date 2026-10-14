@@ -1,1 +1,1 @@
-export { uniq } from '../../../utils/Array';
+export { uniq } from '../../../utils/Array.ts';

@@ -1,6 +1,31 @@
-import pkg from '../../../package.json';
 import fs from 'node:fs';
-import type { VersionConfig } from '../interfaces';
+import { fileURLToPath } from 'node:url';
+import type { VersionConfig } from '../interfaces/index.ts';
+
+const packageMetadataPath = fileURLToPath(new URL('../../../package.json', import.meta.url));
+
+function loadPackageVersion(): string {
+    let content: string;
+    try {
+        content = fs.readFileSync(packageMetadataPath, 'utf8');
+    } catch (error) {
+        throw new Error(`Unable to read package metadata from ${packageMetadataPath}`, { cause: error });
+    }
+
+    let metadata: unknown;
+    try {
+        metadata = JSON.parse(content);
+    } catch (error) {
+        throw new Error(`Unable to parse package metadata from ${packageMetadataPath}`, { cause: error });
+    }
+
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata) || typeof (metadata as { version?: unknown }).version !== 'string') {
+        throw new Error(`Package metadata at ${packageMetadataPath} must contain a string version`);
+    }
+    return (metadata as { version: string }).version;
+}
+
+const packageVersion = loadPackageVersion();
 
 export function generateNewVersionId(config: VersionConfig): string {
     const date = new Date();
@@ -10,10 +35,10 @@ export function generateNewVersionId(config: VersionConfig): string {
         return `${time.year}-${time.month}-${time.day}`;
     } else if (format === 'x.y.z') {
         if (!generateWay || generateWay === 'auto') {
-            if (pkg.version === '0.0.0') {
+            if (packageVersion === '0.0.0') {
                 return readCacheFileVersionId();
             } else {
-                return pkg.version;
+                return packageVersion;
             }
         } else if (generateWay === 'manual') {
             if (!manualControlWay || manualControlWay === 'date') {

@@ -1,13 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isComponentsFile } from './judgement';
-import { splitCssFile } from './split';
-import { extractFileContentClassName, extractFileContentTagName } from './extract';
-import { filterCssUsed, pickupRootFromFiltered, filterRegularCss } from './filter';
-import { readLocalFile } from './preprocess';
-import { parseIndexHTML } from './parse';
-import { replaceValueUsed } from './replace';
-import type { TreeShakingOptions, CssRuleObjectArray } from '../interfaces';
+import { isComponentsFile } from './judgement.ts';
+import { splitCssFile } from './split.ts';
+import { extractFileContentClassName, extractFileContentTagName } from './extract.ts';
+import { filterCssUsed, pickupRootFromFiltered, filterRegularCss } from './filter.ts';
+import { readLocalFile } from './preprocess.ts';
+import { parseIndexHTML } from './parse.ts';
+import { replaceValueUsed } from './replace.ts';
+import type { TreeShakingOptions, CssRuleObjectArray } from '../interfaces/index.ts';
 
 export default async function treeShaking(option: TreeShakingOptions): Promise<string[]> {
     const { manualEntry, componentsFilesPath, excludeTags, excludeClassNameKeywords, replaceVariableDeclarations } = option;

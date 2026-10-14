@@ -1,6 +1,6 @@
 import type { Plugin } from 'vite';
-import treeShaking from './utilities';
-import type { TreeShakingOptions } from './interfaces';
+import treeShaking from './utilities/index.ts';
+import type { TreeShakingOptions } from './interfaces/index.ts';
 
 export default function linkCssTreeShakingPlugin(config: TreeShakingOptions): Plugin {
     const { manualEntry, componentsFilesPath, excludeTags, excludeClassNameKeywords, replaceVariableDeclarations } = config;

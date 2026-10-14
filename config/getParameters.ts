@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
-import type { ScriptInformationParameters } from '../plugin/vite-plugin-tamper-banner-and-css-injection';
+import type { ScriptInformationParameters } from '../plugin/vite-plugin-tamper-banner-and-css-injection/index.ts';
 
 export const APPROVED_GRANTS = ['GM_xmlhttpRequest', 'unsafeWindow'] as const;
 export const SUPPORTED_FRAMEWORKS = ['vue', 'react', 'preact', 'lit', 'svelte', 'solid-js'] as const;

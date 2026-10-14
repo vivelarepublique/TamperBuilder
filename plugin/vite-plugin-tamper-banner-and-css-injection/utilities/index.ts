@@ -1,10 +1,10 @@
-import { uniq } from '../public';
-import { hash } from './crypto';
-import { generalParameter, optionalParameter, parameterArray } from './parameter';
-import { generateNewVersionId } from './id';
-import type { ScriptInformationParameters } from '../interfaces';
+import { uniq } from '../public/index.ts';
+import { hash } from './crypto.ts';
+import { generalParameter, optionalParameter, parameterArray } from './parameter.ts';
+import { generateNewVersionId } from './id.ts';
+import type { ScriptInformationParameters } from '../interfaces/index.ts';
 
-export { splitCssToArray } from './split';
+export { splitCssToArray } from './split.ts';
 
 export async function cssTemplate(code: string, name: string): Promise<string> {
     const cssCode = JSON.stringify(code).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');

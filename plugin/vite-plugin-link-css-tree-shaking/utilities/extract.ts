@@ -1,4 +1,4 @@
-import { uniq } from '../public';
+import { uniq } from '../public/index.ts';
 
 export function extractFileContentTagName(filesData: string[], excludeTags: string[] = []): string[] {
     const tags = filesData.reduce((previous: string[], current: string) => {

@@ -1,8 +1,8 @@
 import { Script } from 'node:vm';
-import { Rollup, type Plugin } from 'vite';
-import { cssTemplate, bannerTemplate, jsTemplate, splitCssToArray } from './utilities';
-import type { PluginOption } from './interfaces';
-export type { ScriptInformationParameters } from './interfaces';
+import type { Rollup, Plugin } from 'vite';
+import { cssTemplate, bannerTemplate, jsTemplate, splitCssToArray } from './utilities/index.ts';
+import type { PluginOption } from './interfaces/index.ts';
+export type { ScriptInformationParameters } from './interfaces/index.ts';
 
 export default function tamperBannerAndCssInjectionPlugin(config: PluginOption): Plugin {
     const { bannerConfig, beautifulCss } = config;
