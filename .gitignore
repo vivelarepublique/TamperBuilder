@@ -5,6 +5,7 @@ dist
 release
 temp
 test
+*.tsbuildinfo
 
 # Logs
 logs

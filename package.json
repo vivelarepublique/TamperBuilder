@@ -1,15 +1,18 @@
 {
     "name": "tamper-builder",
     "version": "0.0.0",
-    "description": "",
+    "description": "A Vite-powered Tampermonkey userscript example using Vue, React, Preact, Lit, Svelte, and Solid.",
     "main": "./src/index.ts",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
         "build:primitive": "vite build --mode primitive",
         "build:minify": "vite build --mode minify",
+        "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.react.json && tsc --noEmit -p tsconfig.preact.json && tsc --noEmit -p tsconfig.lit.json && tsc --noEmit -p tsconfig.solid.json && tsc --noEmit -p tsconfig.node.json && vue-tsc --noEmit -p tsconfig.vue.json && svelte-check --tsconfig ./tsconfig.svelte.json",
         "test": "vitest run",
-        "verify:output": "node scripts/verify-build-output.mjs"
+        "verify:output": "node scripts/verify-build-output.mjs",
+        "verify:builds": "npm run build && npm run verify:output && npm run build:primitive && npm run verify:output && npm run build:minify && npm run verify:output",
+        "check": "npm audit --audit-level=high && npm run typecheck && npm test && npm run verify:builds"
     },
     "keywords": [
         "react",
@@ -17,7 +20,7 @@
         "preact",
         "lit",
         "svelte",
-        "sold",
+        "solid",
         "tampermonkey",
         "vite",
         "typescript"
@@ -25,6 +28,10 @@
     "author": "vivelarepublique",
     "type": "module",
     "license": "MIT",
+    "engines": {
+        "node": ">=22"
+    },
+    "packageManager": "npm@11.19.0",
     "dependencies": {
         "@lit/context": "^1.1.6",
         "@preact/signals": "^2.11.1",
@@ -48,16 +55,19 @@
         "@vitejs/plugin-react": "^5.2.0",
         "@vitejs/plugin-vue": "^6.0.8",
         "fast-xml-parser": "^5.11.0",
+        "jsdom": "30.1.2",
         "less": "^4.9.0",
         "node-fetch": "^3.3.2",
         "sass": "^1.102.0",
         "stylus": "^0.64.0",
         "svelte": "^5.56.9",
+        "svelte-check": "4.7.6",
         "terser": "^5.50.0",
         "typescript": "^6.0.3",
         "vite": "^8.2.1",
         "vite-plugin-solid": "^2.11.14",
         "vitest": "5.0.4",
+        "vue-tsc": "3.3.13",
         "yaml": "^2.9.0"
     }
 }

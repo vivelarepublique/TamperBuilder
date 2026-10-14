@@ -1,5 +1,5 @@
 import { appendElement, createElementWithAttributes, getElement } from './elementBasic';
-import { ScriptOptions, LinkOptions } from '../interface/element';
+import type { ScriptOptions, LinkOptions } from '../interface/element';
 import { body, head } from '../alias';
 
 export function createDivAppElement(id: string | string[]): void {
