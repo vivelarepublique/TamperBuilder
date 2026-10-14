@@ -4,7 +4,7 @@ export interface RequestHeaders {
     readonly [header: string]: string;
 }
 
-export interface TampermonkeyWebRequestParameters {
+export interface HttpRequestParameters {
     url: string;
     method: RequestMethods;
     headers?: RequestHeaders;
@@ -21,4 +21,28 @@ export interface TampermonkeyWebRequestParameters {
     fetch?: boolean;
     user?: string;
     password?: string;
+    signal?: AbortSignal;
 }
+
+export type TampermonkeyWebRequestParameters = HttpRequestParameters;
+
+export type RequestFailureKind = 'http' | 'timeout' | 'abort' | 'network' | 'parse';
+
+interface RequestResultMetadata {
+    status: number;
+    headers: RequestHeaders;
+    finalUrl: string;
+}
+
+export interface RequestSuccess<T> extends RequestResultMetadata {
+    ok: true;
+    data: T;
+}
+
+export interface RequestFailure extends RequestResultMetadata {
+    ok: false;
+    failure: RequestFailureKind;
+    message: string;
+}
+
+export type RequestResult<T = unknown> = RequestSuccess<T> | RequestFailure;

@@ -49,21 +49,65 @@ export function listenElementChanges(selector: string | CommonSelectors, options
     return targetObserver;
 }
 
-export function waitElementFinishLoading(selector: string | CommonSelectors, refer?: HTMLElement): Promise<HTMLElement | null> {
-    return new Promise(resolve => {
-        getElement(selector) && resolve(getElement(selector));
+export interface WaitOptions {
+    root?: HTMLElement;
+    timeout?: number;
+    signal?: AbortSignal;
+}
 
-        const bodyObserver = new MutationObserver(_ => {
+export type ElementWaitResult = { status: 'found'; element: HTMLElement } | { status: 'timeout' } | { status: 'aborted' };
+export type WindowPropertyWaitResult = { status: 'loaded'; available: boolean } | { status: 'timeout' } | { status: 'aborted' };
+
+export function waitElementFinishLoading(selector: string | CommonSelectors, options: WaitOptions = {}): Promise<ElementWaitResult> {
+    const existingElement = getElement(selector);
+    if (existingElement) return Promise.resolve({ status: 'found', element: existingElement });
+    if (options.signal?.aborted) return Promise.resolve({ status: 'aborted' });
+
+    return new Promise(resolve => {
+        let settled = false;
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+        const observer = new MutationObserver(() => {
             const targetElement = getElement(selector);
-            if (targetElement) {
-                bodyObserver.disconnect();
-                resolve(targetElement);
-            }
+            if (targetElement) finish({ status: 'found', element: targetElement });
         });
-        bodyObserver.observe(refer || body, { childList: true, subtree: true });
+        const abort = () => finish({ status: 'aborted' });
+        const finish = (result: ElementWaitResult) => {
+            if (settled) return;
+            settled = true;
+            observer.disconnect();
+            if (timeoutId !== undefined) clearTimeout(timeoutId);
+            options.signal?.removeEventListener('abort', abort);
+            resolve(result);
+        };
+
+        options.signal?.addEventListener('abort', abort, { once: true });
+        if (options.timeout !== undefined) timeoutId = setTimeout(() => finish({ status: 'timeout' }), options.timeout);
+        observer.observe(options.root || body, { childList: true, subtree: true });
     });
 }
 
-export function determineWindowPropertyIsLoaded(propertyName: string | string[]): Promise<boolean> {
-    return new Promise(resolve => windowProxy.addEventListener('load', () => (Array.isArray(propertyName) ? resolve(propertyName.every(property => windowProxy.hasOwnProperty(property))) : resolve(windowProxy.hasOwnProperty(propertyName)))));
+export function determineWindowPropertyIsLoaded(propertyName: string | string[], options: Omit<WaitOptions, 'root'> = {}): Promise<WindowPropertyWaitResult> {
+    const propertyNames = Array.isArray(propertyName) ? propertyName : [propertyName];
+    const propertiesAvailable = () => propertyNames.every(property => Object.prototype.hasOwnProperty.call(windowProxy, property));
+    if (propertiesAvailable() || document.readyState === 'complete') return Promise.resolve({ status: 'loaded', available: propertiesAvailable() });
+    if (options.signal?.aborted) return Promise.resolve({ status: 'aborted' });
+
+    return new Promise(resolve => {
+        let settled = false;
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+        const finish = (result: WindowPropertyWaitResult) => {
+            if (settled) return;
+            settled = true;
+            windowProxy.removeEventListener('load', loaded);
+            options.signal?.removeEventListener('abort', abort);
+            if (timeoutId !== undefined) clearTimeout(timeoutId);
+            resolve(result);
+        };
+        const loaded = () => finish({ status: 'loaded', available: propertiesAvailable() });
+        const abort = () => finish({ status: 'aborted' });
+
+        windowProxy.addEventListener('load', loaded, { once: true });
+        options.signal?.addEventListener('abort', abort, { once: true });
+        if (options.timeout !== undefined) timeoutId = setTimeout(() => finish({ status: 'timeout' }), options.timeout);
+    });
 }

@@ -13,21 +13,17 @@ import { createSolid } from './solid';
 
 import { beforeMountEvent, afterMountEvent } from './lifecycle/mountEvent';
 import { createDivAppElement, createAppElement, getMultiDivAppElement } from './common/utils/elementAdvanced';
+import { startMain } from './main';
 
 createDivAppElement(['vue', 'react', 'preact', 'svelte', 'solid']);
 createAppElement('lit');
 const [vue, react, preact, svelte, solid] = getMultiDivAppElement(['vue', 'react', 'preact', 'svelte', 'solid']);
 
-const begin = async () => await beforeMountEvent();
-const finish = () => afterMountEvent();
-
-begin();
-
-createVue(vue);
-createReact(react);
-createPreact(preact);
-createLit();
-createSvelte(svelte);
-createSolid(solid);
-
-finish();
+void startMain(
+    {
+        beforeMount: beforeMountEvent,
+        mounts: [() => createVue(vue), () => createReact(react), () => createPreact(preact), () => createLit(), () => createSvelte(svelte), () => createSolid(solid)],
+        afterMount: afterMountEvent,
+    },
+    error => console.error('TamperBuilder failed to initialize.', error),
+);

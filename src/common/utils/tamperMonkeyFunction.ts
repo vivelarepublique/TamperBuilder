@@ -1,96 +1,176 @@
 /// <reference path="../../declaration/tampermonkey.d.ts" />
 
-import type { TampermonkeyWebRequestParameters } from '../interface/request';
+import type { HttpRequestParameters, RequestFailure, RequestFailureKind, RequestHeaders, RequestResult } from '../interface/request';
 
-function getContentType(headers: string): string {
-    return headers.match(/[a-z]+\/[a-z]+(?=;\s?charset)/)?.join('') || '';
+const defaultTimeout = 30 * 1000;
+
+interface ResponseMetadata {
+    status: number;
+    headers: RequestHeaders;
+    finalUrl: string;
 }
 
-function responseOK(response: Response): boolean {
-    return response.ok && response.status >= 200 && response.status < 300;
+function getContentType(headers: RequestHeaders): string {
+    return headers['content-type']?.split(';', 1)[0].trim().toLowerCase() || '';
 }
 
-export async function httpRequest(request: TampermonkeyWebRequestParameters): Promise<any> {
+function parseRawHeaders(rawHeaders: string): RequestHeaders {
+    return rawHeaders.split(/\r?\n/).reduce<Record<string, string>>((headers, line) => {
+        const separator = line.indexOf(':');
+        if (separator > 0) headers[line.slice(0, separator).trim().toLowerCase()] = line.slice(separator + 1).trim();
+        return headers;
+    }, {});
+}
+
+function parseFetchHeaders(headers: Headers): RequestHeaders {
+    const parsed: Record<string, string> = {};
+    headers.forEach((value, name) => {
+        parsed[name.toLowerCase()] = value;
+    });
+    return parsed;
+}
+
+function failure(metadata: ResponseMetadata, kind: RequestFailureKind, message: string): RequestFailure {
+    return { ok: false, failure: kind, message, ...metadata };
+}
+
+function emptyMetadata(url: string): ResponseMetadata {
+    return { status: 0, headers: {}, finalUrl: url };
+}
+
+function errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Unknown request error';
+}
+
+function parseText(text: string, contentType: string): unknown {
+    if (contentType === 'application/json' || contentType.endsWith('+json')) return JSON.parse(text);
+    if (contentType === 'application/xml' || contentType === 'text/xml' || contentType.endsWith('+xml')) {
+        const document = new DOMParser().parseFromString(text, 'application/xml');
+        if (document.querySelector('parsererror')) throw new Error('Invalid XML response');
+        return document;
+    }
+    if (contentType === 'text/html') return new DOMParser().parseFromString(text, 'text/html');
+    return text;
+}
+
+async function requestWithFetch<T>(request: HttpRequestParameters): Promise<RequestResult<T>> {
+    const { url, method, headers, data, redirect, timeout = defaultTimeout, anonymous, signal } = request;
+    const controller = new AbortController();
+    let timedOut = false;
+    let externallyAborted = false;
+
+    if (signal?.aborted) return failure(emptyMetadata(url), 'abort', 'Request aborted');
+
+    const abortFromSignal = () => {
+        externallyAborted = true;
+        controller.abort();
+    };
+    signal?.addEventListener('abort', abortFromSignal, { once: true });
+    const timeoutId = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+    }, timeout);
+
     try {
-        const defaultTimeout = 30 * 1000;
-        const isBrowser = 'undefined' === typeof GM_xmlhttpRequest;
+        const response = await fetch(url, {
+            method,
+            headers,
+            body: data && method !== 'GET' && method !== 'HEAD' ? data : undefined,
+            redirect,
+            signal: controller.signal,
+            credentials: anonymous === false ? 'include' : 'omit',
+        });
+        const metadata: ResponseMetadata = {
+            status: response.status,
+            headers: parseFetchHeaders(response.headers),
+            finalUrl: response.url || url,
+        };
+        if (!response.ok || response.status < 200 || response.status >= 300) return failure(metadata, 'http', `HTTP ${response.status}`);
 
-        const { url, method, headers, data, timeout, anonymous } = request;
-        const noCookie = typeof anonymous === 'undefined' || anonymous;
-
-        if (!isBrowser) {
-            return new Promise(resolve => {
-                const context: TampermonkeyWebRequestParameters = { url, method };
-                if (headers) {
-                    Object.assign(context, headers);
-                }
-                if (data && method != 'GET') {
-                    Object.assign(context, data);
-                }
-
-                GM_xmlhttpRequest({
-                    fetch: true,
-                    timeout: timeout || defaultTimeout,
-                    anonymous: noCookie,
-                    ...context,
-                    onload: response => {
-                        const contentType = getContentType(response.responseHeaders);
-
-                        if (contentType === 'application/json') {
-                            resolve(JSON.parse(response.responseText));
-                        } else if (contentType === 'application/xml' || contentType === 'text/xml' || contentType === 'text/html') {
-                            resolve(response.responseXML);
-                        } else {
-                            resolve(response);
-                        }
-                    },
-                    onabort: () => resolve(null),
-                    onerror: _ => resolve(null),
-                });
-            });
-        } else {
-            const controller = new AbortController();
-
-            const timeoutId = setTimeout(() => {
-                controller.abort();
-            }, timeout || defaultTimeout);
-
-            const init: RequestInit = { method, signal: controller.signal, credentials: noCookie ? 'omit' : 'include' };
-            if (headers) {
-                Object.assign(init, headers);
+        try {
+            let parsed: unknown;
+            if (request.responseType === 'arraybuffer') parsed = await response.arrayBuffer();
+            else if (request.responseType === 'blob') parsed = await response.blob();
+            else if (request.responseType === 'stream') parsed = response.body;
+            else {
+                const text = await response.text();
+                parsed = request.responseType === 'json' ? JSON.parse(text) : parseText(text, getContentType(metadata.headers));
             }
-            if (data && method != 'GET') {
-                Object.assign(init, { body: data });
-            }
-
-            const response = await fetch(url, init);
-            clearTimeout(timeoutId);
-
-            const ok = responseOK(response);
-            if (!ok) return null;
-
-            const contentType = getContentType(response.headers.get('content-type') || '');
-
-            if (contentType === 'application/json') {
-                return await response.json();
-            } else if (contentType === 'application/xml' || contentType === 'text/xml' || contentType === 'text/html') {
-                const xml = await response.text();
-                return new DOMParser().parseFromString(xml, 'text/html');
-            } else {
-                return response;
-            }
+            return { ok: true, data: parsed as T, ...metadata };
+        } catch (error) {
+            return failure(metadata, 'parse', errorMessage(error));
         }
-    } catch (error: any) {
-        if (error.name === 'AbortError') {
-            throw new Error('Request timed out.');
-        } else if (error.name === 'ReferenceError') {
-            console.log(error);
-        } else {
-            throw error;
-        }
+    } catch (error) {
+        const metadata = emptyMetadata(url);
+        if (timedOut) return failure(metadata, 'timeout', 'Request timed out');
+        if (externallyAborted || signal?.aborted) return failure(metadata, 'abort', 'Request aborted');
+        return failure(metadata, 'network', errorMessage(error));
+    } finally {
+        clearTimeout(timeoutId);
+        signal?.removeEventListener('abort', abortFromSignal);
     }
 }
 
-export const windowProxy: {
-    [key: string]: any;
-} = typeof unsafeWindow === 'object' ? unsafeWindow : window;
+function requestWithGM<T>(request: HttpRequestParameters): Promise<RequestResult<T>> {
+    const { signal, timeout = defaultTimeout, ...details } = request;
+    if (signal?.aborted) return Promise.resolve(failure(emptyMetadata(request.url), 'abort', 'Request aborted'));
+
+    return new Promise(resolve => {
+        let settled = false;
+        let abortHandle: Tampermonkey.AbortHandle<void> | undefined;
+        const finish = (result: RequestResult<T>) => {
+            if (settled) return;
+            settled = true;
+            signal?.removeEventListener('abort', abortFromSignal);
+            resolve(result);
+        };
+        const finishWithoutResponse = (kind: Exclude<RequestFailureKind, 'http' | 'parse'>, message: string) => finish(failure(emptyMetadata(request.url), kind, message));
+        const abortFromSignal = () => {
+            abortHandle?.abort();
+            finishWithoutResponse('abort', 'Request aborted');
+        };
+        signal?.addEventListener('abort', abortFromSignal, { once: true });
+
+        try {
+            abortHandle = GM_xmlhttpRequest({
+                ...details,
+                timeout,
+                anonymous: request.anonymous ?? true,
+                fetch: request.fetch ?? true,
+                onload: response => {
+                    const metadata: ResponseMetadata = {
+                        status: response.status,
+                        headers: parseRawHeaders(response.responseHeaders),
+                        finalUrl: response.finalUrl || request.url,
+                    };
+                    if (response.status < 200 || response.status >= 300) {
+                        finish(failure(metadata, 'http', `HTTP ${response.status}`));
+                        return;
+                    }
+
+                    try {
+                        let parsed: unknown;
+                        if (request.responseType === 'arraybuffer' || request.responseType === 'blob' || request.responseType === 'stream') parsed = response.response;
+                        else parsed = request.responseType === 'json' ? JSON.parse(response.responseText) : parseText(response.responseText, getContentType(metadata.headers));
+                        finish({ ok: true, data: parsed as T, ...metadata });
+                    } catch (error) {
+                        finish(failure(metadata, 'parse', errorMessage(error)));
+                    }
+                },
+                onabort: () => finishWithoutResponse('abort', 'Request aborted'),
+                onerror: response => finishWithoutResponse('network', response.error || 'Network request failed'),
+                ontimeout: () => finishWithoutResponse('timeout', 'Request timed out'),
+            });
+        } catch (error) {
+            finishWithoutResponse('network', errorMessage(error));
+        }
+    });
+}
+
+export function httpRequest<T = unknown>(request: HttpRequestParameters): Promise<RequestResult<T>> {
+    return typeof GM_xmlhttpRequest === 'undefined' ? requestWithFetch<T>(request) : requestWithGM<T>(request);
+}
+
+export type TamperWindow = Window & typeof globalThis & Record<string, unknown> & { scriptTemplate?: { search?: string } };
+
+export const windowProxy = (typeof unsafeWindow === 'object' ? unsafeWindow : window) as TamperWindow;
