@@ -54,16 +54,23 @@ describe('configuration loading', () => {
         }
     });
 
+    it('rejects a missing match list instead of expanding the script scope', () => {
+        const rootDirectory = createFixture();
+        writeFileSync(path.join(rootDirectory, 'config/banner.yaml'), 'name: fixture\ngrant:\n  - GM_xmlhttpRequest\n');
+
+        expect(() => loadBannerConfig({ rootDirectory, packageMetadata: {} })).toThrow('banner.match: is required');
+    });
+
     it('rejects grants outside the approved list with a field path', () => {
         const rootDirectory = createFixture();
-        writeFileSync(path.join(rootDirectory, 'config/banner.yaml'), 'name: fixture\ngrant:\n  - window.onurlchange\n');
+        writeFileSync(path.join(rootDirectory, 'config/banner.yaml'), 'name: fixture\nmatch:\n  - https://example.com/*\ngrant:\n  - window.onurlchange\n');
 
         expect(() => loadBannerConfig({ rootDirectory, packageMetadata: {} })).toThrow('banner.grant[0]');
     });
 
     it('rejects wildcard connect values with a field path', () => {
         const rootDirectory = createFixture();
-        writeFileSync(path.join(rootDirectory, 'config/banner.yaml'), "name: fixture\nconnect: '*'\n");
+        writeFileSync(path.join(rootDirectory, 'config/banner.yaml'), "name: fixture\nmatch:\n  - https://example.com/*\nconnect: '*'\n");
 
         expect(() => loadBannerConfig({ rootDirectory, packageMetadata: {} })).toThrow('banner.connect[0]');
     });

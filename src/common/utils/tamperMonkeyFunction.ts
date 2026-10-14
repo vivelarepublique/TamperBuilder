@@ -8,6 +8,7 @@ interface ResponseMetadata {
     status: number;
     headers: RequestHeaders;
     finalUrl: string;
+    contentType: string;
 }
 
 function getContentType(headers: RequestHeaders): string {
@@ -35,7 +36,7 @@ function failure(metadata: ResponseMetadata, kind: RequestFailureKind, message: 
 }
 
 function emptyMetadata(url: string): ResponseMetadata {
-    return { status: 0, headers: {}, finalUrl: url };
+    return { status: 0, headers: {}, finalUrl: url, contentType: '' };
 }
 
 function errorMessage(error: unknown): string {
@@ -80,10 +81,12 @@ async function requestWithFetch<T>(request: HttpRequestParameters): Promise<Requ
             signal: controller.signal,
             credentials: anonymous === false ? 'include' : 'omit',
         });
+        const parsedHeaders = parseFetchHeaders(response.headers);
         const metadata: ResponseMetadata = {
             status: response.status,
-            headers: parseFetchHeaders(response.headers),
+            headers: parsedHeaders,
             finalUrl: response.url || url,
+            contentType: getContentType(parsedHeaders),
         };
         if (!response.ok || response.status < 200 || response.status >= 300) return failure(metadata, 'http', `HTTP ${response.status}`);
 
@@ -94,7 +97,7 @@ async function requestWithFetch<T>(request: HttpRequestParameters): Promise<Requ
             else if (request.responseType === 'stream') parsed = response.body;
             else {
                 const text = await response.text();
-                parsed = request.responseType === 'json' ? JSON.parse(text) : parseText(text, getContentType(metadata.headers));
+                parsed = request.responseType === 'json' ? JSON.parse(text) : parseText(text, metadata.contentType);
             }
             return { ok: true, data: parsed as T, ...metadata };
         } catch (error) {
@@ -138,10 +141,12 @@ function requestWithGM<T>(request: HttpRequestParameters): Promise<RequestResult
                 anonymous: request.anonymous ?? true,
                 fetch: request.fetch ?? true,
                 onload: response => {
+                    const parsedHeaders = parseRawHeaders(response.responseHeaders);
                     const metadata: ResponseMetadata = {
                         status: response.status,
-                        headers: parseRawHeaders(response.responseHeaders),
+                        headers: parsedHeaders,
                         finalUrl: response.finalUrl || request.url,
+                        contentType: getContentType(parsedHeaders),
                     };
                     if (response.status < 200 || response.status >= 300) {
                         finish(failure(metadata, 'http', `HTTP ${response.status}`));
@@ -151,7 +156,7 @@ function requestWithGM<T>(request: HttpRequestParameters): Promise<RequestResult
                     try {
                         let parsed: unknown;
                         if (request.responseType === 'arraybuffer' || request.responseType === 'blob' || request.responseType === 'stream') parsed = response.response;
-                        else parsed = request.responseType === 'json' ? JSON.parse(response.responseText) : parseText(response.responseText, getContentType(metadata.headers));
+                        else parsed = request.responseType === 'json' ? JSON.parse(response.responseText) : parseText(response.responseText, metadata.contentType);
                         finish({ ok: true, data: parsed as T, ...metadata });
                     } catch (error) {
                         finish(failure(metadata, 'parse', errorMessage(error)));

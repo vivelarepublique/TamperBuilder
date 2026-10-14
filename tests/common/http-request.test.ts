@@ -65,6 +65,7 @@ describe('httpRequest', () => {
             status: 200,
             headers: { 'content-type': 'application/json; charset=utf-8', 'x-result': 'yes' },
             finalUrl: 'https://cdn.example.test/final',
+            contentType: 'application/json',
             data: { value: 1 },
         });
     });
@@ -80,6 +81,7 @@ describe('httpRequest', () => {
             status: 200,
             headers: { 'content-type': 'application/json; charset=utf-8', 'x-result': 'yes' },
             finalUrl: 'https://cdn.example.test/final',
+            contentType: 'application/json',
             data: { value: 1 },
         });
     });
@@ -108,7 +110,7 @@ describe('httpRequest', () => {
         ['GM', () => installGM(details => invoke(details, 'onload', gmResponse('failure', 503)))],
     ])('returns a deterministic HTTP failure for %s', async (_transport, install) => {
         install();
-        await expect(httpRequest({ url, method: 'GET' })).resolves.toMatchObject({ ok: false, failure: 'http', status: 503, finalUrl: url });
+        await expect(httpRequest({ url, method: 'GET' })).resolves.toMatchObject({ ok: false, failure: 'http', status: 503, finalUrl: url, contentType: 'text/plain' });
     });
 
     it.each([
@@ -116,7 +118,7 @@ describe('httpRequest', () => {
         ['GM', () => installGM(details => invoke(details, 'onerror', { error: 'offline' }))],
     ])('returns a deterministic network failure for %s', async (_transport, install) => {
         install();
-        await expect(httpRequest({ url, method: 'GET' })).resolves.toMatchObject({ ok: false, failure: 'network', status: 0 });
+        await expect(httpRequest({ url, method: 'GET' })).resolves.toMatchObject({ ok: false, failure: 'network', status: 0, contentType: '' });
     });
 
     it.each([
@@ -124,7 +126,7 @@ describe('httpRequest', () => {
         ['GM', () => installGM(details => invoke(details, 'onload', gmResponse('{bad', 200, 'application/json')))],
     ])('returns a deterministic parse failure for %s', async (_transport, install) => {
         install();
-        await expect(httpRequest({ url, method: 'GET' })).resolves.toMatchObject({ ok: false, failure: 'parse', status: 200 });
+        await expect(httpRequest({ url, method: 'GET' })).resolves.toMatchObject({ ok: false, failure: 'parse', status: 200, contentType: 'application/json' });
     });
 
     it('distinguishes fetch timeout from external abort and cleans timers', async () => {

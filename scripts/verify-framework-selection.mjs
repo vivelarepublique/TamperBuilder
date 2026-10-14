@@ -5,6 +5,7 @@ import path from 'node:path';
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const outputDirectory = path.join(projectRoot, 'release');
+const localCssEntry = path.join(projectRoot, 'tests/fixtures/css/safe.min.css');
 const temporaryDirectory = mkdtempSync(path.join(tmpdir(), 'tamper-builder-frameworks-'));
 const budgets = {
     showcase: 2 * 1024 * 1024,
@@ -31,7 +32,7 @@ function findUserscript() {
 
 function buildAndInspect(name, environment, budget) {
     const reportPath = path.join(temporaryDirectory, `${name}-modules.json`);
-    run('npm', ['run', 'build'], { ...environment, TAMPER_BUILDER_MODULE_REPORT: reportPath });
+    run('npm', ['run', 'build'], { ...environment, TAMPER_BUILDER_CSS_ENTRY: localCssEntry, TAMPER_BUILDER_MODULE_REPORT: reportPath });
     run(process.execPath, [path.join(projectRoot, 'scripts/verify-build-output.mjs')]);
     const outputPath = findUserscript();
     const size = statSync(outputPath).size;

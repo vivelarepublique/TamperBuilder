@@ -2,7 +2,8 @@ import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-const outputDirectory = path.resolve('release');
+const projectRoot = path.resolve(import.meta.dirname, '..');
+const outputDirectory = path.join(projectRoot, 'release');
 
 async function listFiles(directory) {
     const entries = await readdir(directory, { withFileTypes: true });
@@ -40,4 +41,4 @@ if (syntaxCheck.status !== 0) {
     throw new Error(`Generated userscript failed node --check:\n${syntaxCheck.stderr || syntaxCheck.stdout}`);
 }
 
-console.log(`Verified ${path.relative(process.cwd(), userScripts[0])}: one userscript, no CSS assets, valid JavaScript syntax.`);
+console.log(`Verified ${path.relative(projectRoot, userScripts[0])}: one userscript, no CSS assets, valid JavaScript syntax.`);

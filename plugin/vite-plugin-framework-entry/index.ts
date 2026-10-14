@@ -34,7 +34,7 @@ export const FRAMEWORK_DEFINITIONS: Record<SupportedFramework, FrameworkDefiniti
     lit: {
         importPath: '/src/lit',
         factory: 'createLit',
-        target: 'custom-element',
+        target: 'div',
         modulePatterns: ['/src/lit/', '/node_modules/lit/', '/node_modules/@lit/', '/node_modules/lit-element/', '/node_modules/lit-html/'],
     },
     svelte: {

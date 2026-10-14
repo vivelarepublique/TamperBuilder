@@ -58,6 +58,7 @@ export default async function configure({ command, mode }: ConfigEnv): Promise<U
     const buildPlugins: PluginOption[] = isBuild
         ? [
               linkCssTreeShaking({
+                  manualEntry: process.env.TAMPER_BUILDER_CSS_ENTRY,
                   componentsFilesPath: globalConfig.map(config => path.resolve(rootDirectory, config.componentsFilesPaths)),
                   replaceVariableDeclarations: true,
               }),

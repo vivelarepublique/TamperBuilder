@@ -12,7 +12,7 @@
         "test": "vitest run",
         "verify:output": "node scripts/verify-build-output.mjs",
         "verify:frameworks": "node scripts/verify-framework-selection.mjs",
-        "verify:builds": "npm run build && npm run verify:output && npm run build:primitive && npm run verify:output && npm run build:minify && npm run verify:output",
+        "verify:builds": "node scripts/verify-builds.mjs",
         "check": "npm audit --audit-level=high && npm run typecheck && npm test && npm run verify:frameworks && npm run verify:builds"
     },
     "keywords": [

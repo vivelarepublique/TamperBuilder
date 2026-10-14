@@ -126,7 +126,7 @@ export function loadBannerConfig(options: ConfigurationOptions = {}): ScriptInfo
     rejectUnknownFields(banner, bannerFields, 'banner');
 
     const metadata = options.packageMetadata ?? readPackageMetadata(rootDirectory);
-    const match = stringList(banner, 'match', 'banner') ?? ['*://*/*'];
+    const match = stringList(banner, 'match', 'banner', true)!;
     const require = stringOrStringList(banner, 'require', 'banner');
     const tag = stringList(banner, 'tag', 'banner');
     const grants = stringList(banner, 'grant', 'banner') ?? [];

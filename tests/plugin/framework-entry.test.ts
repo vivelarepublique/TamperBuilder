@@ -1,6 +1,9 @@
+// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import type { FrameworkConfiguration } from '../../config/getParameters';
 import { createFrameworkEntryCode, validateFrameworkModuleGraph } from '../../plugin/vite-plugin-framework-entry';
+import { createLit } from '../../src/lit';
 
 const vueOnly: FrameworkConfiguration[] = [
     {
@@ -17,6 +20,23 @@ describe('framework virtual entry', () => {
         expect(code).toContain("from \"/src/vue\"");
         expect(code).toContain('mountFramework0(frameworkTargets[0])');
         expect(code).not.toMatch(/\/src\/(react|preact|lit|svelte|solid)/);
+    });
+
+    it('mounts Lit into the target generated from any valid nickname', () => {
+        const code = createFrameworkEntryCode([
+            {
+                framework: 'lit',
+                nickname: 'demo',
+                componentsFilesPaths: 'src/lit/components',
+            },
+        ]);
+        const target = document.createElement('div');
+
+        expect(code).toContain('const divFrameworkNicknames = ["demo"]');
+        expect(code).toContain('mountFramework0(frameworkTargets[0])');
+        createLit(target);
+
+        expect(target.firstElementChild?.tagName.toLowerCase()).toBe('lit-app');
     });
 
     it('reports unselected application and runtime modules', () => {

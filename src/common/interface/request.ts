@@ -32,6 +32,7 @@ interface RequestResultMetadata {
     status: number;
     headers: RequestHeaders;
     finalUrl: string;
+    contentType: string;
 }
 
 export interface RequestSuccess<T> extends RequestResultMetadata {
