@@ -43,18 +43,33 @@ describe('Component Lab visual contract', () => {
         Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
         Object.defineProperty(window, 'innerHeight', { configurable: true, value: 844 });
         const hostStyle = document.createElement('style');
-        hostStyle.textContent = 'input { appearance: auto; box-sizing: content-box; width: 900px; } img { display: inline; width: 900px; height: 900px; margin: 50px; padding: 50px; border: 20px solid red; } dialog { box-sizing: content-box; }';
+        hostStyle.textContent = 'input { appearance: auto; box-sizing: content-box; width: 900px; } button { width: 900px; max-width: 900px; height: 900px; max-height: 900px; margin: 80px; padding: 70px; } img { display: inline; width: 900px; height: 900px; margin: 50px; padding: 50px; border: 20px solid red; } dialog { box-sizing: content-box; }';
         const showcaseStyle = document.createElement('style');
         showcaseStyle.textContent = css;
         document.head.append(hostStyle, showcaseStyle);
-        document.body.innerHTML = '<div id="framework-test-launcher-rail"><button class="ft-showcase-launcher"><img class="ft-showcase-launcher-image framework-test-logo-animation"></button></div><dialog class="ft-showcase-dialog"><input class="ft-showcase-choice" type="checkbox"></dialog>';
+        document.body.innerHTML = '<div id="framework-test-launcher-rail"><button class="ft-showcase-launcher"><img class="ft-showcase-launcher-image framework-test-logo-animation"></button></div><dialog class="ft-showcase-dialog"><button class="ft-showcase-button">Action</button><input class="ft-showcase-choice" type="radio"><input class="ft-showcase-choice" type="checkbox"></dialog>';
 
         const dialog = document.querySelector<HTMLDialogElement>('dialog')!;
-        const choice = document.querySelector<HTMLInputElement>('.ft-showcase-choice')!;
+        const button = document.querySelector<HTMLButtonElement>('.ft-showcase-button')!;
+        const choices = [...document.querySelectorAll<HTMLInputElement>('.ft-showcase-choice')];
         const image = document.querySelector<HTMLImageElement>('.ft-showcase-launcher-image')!;
         expect(getComputedStyle(dialog).boxSizing).toBe('border-box');
-        expect(getComputedStyle(choice).boxSizing).toBe('border-box');
-        expect(getComputedStyle(choice).appearance).toBe('none');
+        expect([
+            getComputedStyle(button).width,
+            getComputedStyle(button).maxWidth,
+            getComputedStyle(button).height,
+            getComputedStyle(button).maxHeight,
+            getComputedStyle(button).margin,
+            getComputedStyle(button).padding,
+        ]).toEqual(['auto', '100%', 'auto', 'none', '0px', '8px 16px']);
+        for (const choice of choices) {
+            expect([
+                getComputedStyle(choice).boxSizing,
+                getComputedStyle(choice).appearance,
+                getComputedStyle(choice).width,
+                getComputedStyle(choice).height,
+            ]).toEqual(['border-box', 'none', '44px', '44px']);
+        }
         expect([getComputedStyle(image).display, getComputedStyle(image).boxSizing, getComputedStyle(image).width, getComputedStyle(image).height]).toEqual([
             'block', 'border-box', '24px', '24px',
         ]);

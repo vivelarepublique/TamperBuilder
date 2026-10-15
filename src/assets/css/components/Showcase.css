@@ -44,8 +44,14 @@
 
 #framework-test-launcher-rail .ft-showcase-launcher,
 .ft-showcase-dialog .ft-showcase-button {
+    width: auto;
     min-width: 44px;
+    max-width: 100%;
+    height: auto;
     min-height: 44px;
+    max-height: none;
+    margin: 0;
+    padding: 8px 16px;
     cursor: pointer;
     background: var(--ft-showcase-accent);
     color: #fff;
@@ -198,25 +204,43 @@
 
 .ft-showcase-dialog .ft-showcase-choice {
     display: inline-grid;
-    width: 20px;
-    min-width: 20px;
-    max-width: 20px;
-    height: 20px;
-    min-height: 20px;
-    max-height: 20px;
-    margin: 0 6px 0 0;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
+    margin: 0;
     padding: 0;
     place-content: center;
     vertical-align: middle;
-    background: var(--ft-showcase-surface);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     cursor: pointer;
 }
 
-.ft-showcase-dialog .ft-showcase-choice[type='radio'] {
+.ft-showcase-dialog .ft-showcase-choice::after,
+.ft-showcase-dialog .ft-showcase-choice::before {
+    grid-area: 1 / 1;
+}
+
+.ft-showcase-dialog .ft-showcase-choice::after {
+    width: 20px;
+    height: 20px;
+    box-sizing: border-box;
+    border: 1px solid var(--ft-showcase-border);
+    border-radius: var(--ft-showcase-radius);
+    background: var(--ft-showcase-surface);
+    content: '';
+}
+
+.ft-showcase-dialog .ft-showcase-choice[type='radio']::after {
     border-radius: 50%;
 }
 
 .ft-showcase-dialog .ft-showcase-choice::before {
+    z-index: 1;
     width: 10px;
     height: 10px;
     border-radius: 2px;

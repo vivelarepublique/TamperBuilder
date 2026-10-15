@@ -201,11 +201,12 @@ describe('deterministic render scenario', () => {
             callback();
             return 1 as unknown as ReturnType<typeof setTimeout>;
         };
-        const { adapter } = createRecordingAdapter();
+        const { adapter, calls } = createRecordingAdapter();
 
         await expect(runRenderScenario({ size: 250, adapter, scheduler, signal: new AbortController().signal })).rejects.toEqual(
             expect.objectContaining({ name: 'BenchmarkTimeoutError', phase: 'warmup-create' }),
         );
+        expect(calls).toEqual([]);
         expect(scheduler.clearedTimers).toHaveLength(1);
         expect(scheduler.frames.size).toBe(0);
     });

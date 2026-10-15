@@ -140,8 +140,11 @@ function runPhase<T>(phase: BenchmarkPhase, scheduler: BenchmarkScheduler, signa
         signal.addEventListener('abort', onAbort, { once: true });
         try {
             const createdTimer = scheduler.setTimer(() => fail(new BenchmarkTimeoutError(phase)), timeoutMilliseconds);
-            if (settled) scheduler.clearTimer(createdTimer);
-            else timer = createdTimer;
+            if (settled) {
+                scheduler.clearTimer(createdTimer);
+                return;
+            }
+            timer = createdTimer;
         } catch (error) {
             fail(error);
             return;
