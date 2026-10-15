@@ -194,17 +194,19 @@ describe('page bridge adapter', () => {
         expect(fixture.timers.size).toBe(1);
         expect(subscription.focusAndHighlight()).toBe('focused');
         expect(fixture.timers.size).toBe(1);
-        input.classList.add('host-highlight');
+        input.classList.add('host-highlight', 'ft-showcase-page-bridge-highlight');
         input.setAttribute('data-ft-showcase-page-bridge-highlight', 'host-rewrite');
         subscription.clearHighlight();
         expect(input.getAttribute('data-ft-showcase-page-bridge-highlight')).toBe('host-rewrite');
         expect(input.classList.contains('host-highlight')).toBe(true);
+        expect(input.classList.contains('ft-showcase-page-bridge-highlight')).toBe(true);
         expect(fixture.timers.size).toBe(0);
 
         input.setAttribute('data-ft-showcase-page-bridge-highlight', 'host-original');
         expect(subscription.focusAndHighlight()).toBe('focused');
         subscription.dispose();
         expect(input.getAttribute('data-ft-showcase-page-bridge-highlight')).toBe('host-original');
+        expect(input.classList.contains('ft-showcase-page-bridge-highlight')).toBe(true);
     });
 
     it('returns unavailable when action refresh enters fatal state', () => {

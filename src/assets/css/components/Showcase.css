@@ -564,8 +564,8 @@
     padding-inline-start: 24px;
 }
 
-.ft-showcase-page-bridge-highlight[data-ft-showcase-page-bridge-highlight] {
-    outline: 3px solid var(--ft-showcase-focus);
+[data-ft-showcase-page-bridge-highlight^='tamper-builder-'] {
+    outline: 3px solid var(--ft-showcase-focus, #0b6bcb);
     outline-offset: 2px;
     background-color: #e8f1ff;
     transition: outline-color 160ms ease, background-color 160ms ease;
@@ -646,7 +646,7 @@
     .ft-showcase-dialog .ft-showcase-button,
     .ft-showcase-dialog .ft-showcase-tabs,
     .ft-showcase-dialog .ft-showcase-composition-card,
-    .ft-showcase-page-bridge-highlight[data-ft-showcase-page-bridge-highlight] {
+    [data-ft-showcase-page-bridge-highlight^='tamper-builder-'] {
         animation: none;
         scroll-behavior: auto;
         transition: none;

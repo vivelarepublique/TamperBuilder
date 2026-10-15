@@ -39,6 +39,9 @@ interface BrowserLayoutResult {
     readonly tabListClientWidth: number;
     readonly tabListScrollWidth: number;
     readonly activeTabVisible: boolean;
+    readonly highlightOutlineColor: string;
+    readonly highlightOutlineStyle: string;
+    readonly highlightOutlineWidth: string;
 }
 
 function findBrowserExecutable(): string {
@@ -64,7 +67,8 @@ function expectBrowserLayout(width: number, markup: string, hostileCss: string):
     const browser = findBrowserExecutable();
     const innerDocument = `<!doctype html>
         <html><head><meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>${hostileCss}\n${css}</style></head><body>${markup}</body></html>`;
+        <style>${hostileCss}\n${css}</style></head><body>${markup}
+        <input id="external-highlight-target" data-ft-showcase-page-bridge-highlight="tamper-builder-browser-probe" style="position:fixed;width:20px;height:20px"></body></html>`;
     const probe = `
         const frame = document.getElementById('layout-frame');
         frame.addEventListener('load', () => {
@@ -77,6 +81,7 @@ function expectBrowserLayout(width: number, markup: string, hostileCss: string):
                 const body = frameDocument.body;
                 const listRect = tabList?.getBoundingClientRect();
                 const tabRect = activeTab?.getBoundingClientRect();
+                const highlightStyle = frame.contentWindow.getComputedStyle(frameDocument.getElementById('external-highlight-target'));
                 const undersizedTargets = Array.from(frameDocument.querySelectorAll('button, .ft-showcase-choice'))
                     .filter(element => {
                         const rect = element.getBoundingClientRect();
@@ -93,6 +98,9 @@ function expectBrowserLayout(width: number, markup: string, hostileCss: string):
                     tabListClientWidth: tabList?.clientWidth || 0,
                     tabListScrollWidth: tabList?.scrollWidth || 0,
                     activeTabVisible: !!listRect && !!tabRect && tabRect.left >= listRect.left - 1 && tabRect.right <= listRect.right + 1,
+                    highlightOutlineColor: highlightStyle.outlineColor,
+                    highlightOutlineStyle: highlightStyle.outlineStyle,
+                    highlightOutlineWidth: highlightStyle.outlineWidth,
                 });
                 document.body.append(result);
             }, 16), 16);
@@ -128,6 +136,7 @@ function expectBrowserLayout(width: number, markup: string, hostileCss: string):
         expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth);
         expect(layout.undersizedTargets).toEqual([]);
         expect(layout.activeTabVisible, JSON.stringify(layout)).toBe(true);
+        expect([layout.highlightOutlineStyle, layout.highlightOutlineWidth, layout.highlightOutlineColor]).toEqual(['solid', '3px', 'rgb(11, 107, 203)']);
         if (width === 390) expect(layout.tabListScrollWidth).toBeGreaterThan(layout.tabListClientWidth);
     } finally {
         rmSync(directory, { force: true, recursive: true });
