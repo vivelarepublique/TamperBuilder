@@ -227,7 +227,10 @@ for (const factory of harnessFactories) {
                 expect(document.activeElement).toBe(title);
 
                 await setValue(harness, title, 'Native enter path');
-                await perform(harness, () => form.requestSubmit());
+                await perform(harness, () => {
+                    const shouldSubmit = title.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+                    if (shouldSubmit) form.requestSubmit();
+                });
                 expect(Array.from(target.querySelectorAll('.ft-showcase-task-title'), element => element.textContent)).toContain('Native enter path');
                 expect(document.activeElement).toBe(title);
 
