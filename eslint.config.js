@@ -11,6 +11,12 @@ import tseslint from 'typescript-eslint';
 
 const typescriptFiles = ['**/*.ts', '**/*.tsx'];
 const browserSourceFiles = ['src/**/*.{ts,tsx}', 'src/**/*.vue', 'src/**/*.svelte'];
+const compositionSourceFiles = [
+    'src/{react,preact,solid}/components/Composition*.tsx',
+    'src/lit/components/lit-composition-*.ts',
+    'src/vue/components/Composition*.vue',
+    'src/svelte/components/Composition*.svelte',
+];
 const nodeFiles = ['config/**/*.ts', 'plugin/**/*.ts', 'utils/**/*.ts', 'tests/**/*.ts', 'scripts/**/*.{js,mjs}', '*.config.{js,ts}', 'vite.config.ts'];
 const typeProjects = [
     './tsconfig.app.json',
@@ -189,5 +195,41 @@ export default [
     {
         ...solid.configs['flat/typescript'],
         files: ['src/solid/**/*.{ts,tsx}'],
+    },
+    {
+        files: compositionSourceFiles,
+        rules: {
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector: "MemberExpression[property.name=/^(innerHTML|outerHTML|insertAdjacentHTML|createContextualFragment|setHTML|setHTMLUnsafe|parseHTMLUnsafe)$/]",
+                    message: 'Composition components must render typed framework content, not raw markup APIs.',
+                },
+                {
+                    selector: "JSXAttribute[name.name=/^(innerHTML|dangerouslySetInnerHTML)$/]",
+                    message: 'Composition components must render typed framework content, not raw markup attributes.',
+                },
+                {
+                    selector: "NewExpression[callee.name='DOMParser']",
+                    message: 'Composition components must not parse raw markup.',
+                },
+                {
+                    selector: 'ImportDeclaration[source.value=/unsafe-html/], ImportDeclaration[source.value=/unsafe-static/]',
+                    message: 'Composition components must not import raw markup directives.',
+                },
+                {
+                    selector: "CallExpression[callee.name=/^(unsafeHTML|unsafeStatic)$/]",
+                    message: 'Composition components must not invoke raw markup directives.',
+                },
+            ],
+        },
+    },
+    {
+        files: ['src/vue/components/Composition*.vue'],
+        rules: { 'vue/no-v-html': 'error' },
+    },
+    {
+        files: ['src/svelte/components/Composition*.svelte'],
+        rules: { 'svelte/no-at-html-tags': 'error' },
     },
 ];
