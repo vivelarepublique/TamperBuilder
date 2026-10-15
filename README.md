@@ -43,14 +43,17 @@ The default `config/global-configuration.yaml` deliberately selects all six fram
 
 ## Prerequisite
 
-- [Node.js](https://nodejs.org/en/) (>= 22.0.0)
-  > Only tested under Node 22.*.0, older versions may not be compatible.
+- [Node.js](https://nodejs.org/en/) `^22.22.2 || ^24.15.0 || >=26.0.0`
+- npm `11.19.0`
+
+The known-good local default in `.nvmrc` is Node 24.20.0. The CI quality gate evaluates the minimum maintained Node 22 and Node 24 versions (22.22.2 and 24.15.0). Odd-numbered Node 23 and 25 releases are not supported or promised by this project.
 
 ## Usage
 
 ```bash
 git clone https://github.com/vivelarepublique/TamperBuilder
 cd TamperBuilder
+nvm use
 npm ci
 ```
 
