@@ -1,77 +1,101 @@
-import React, { Fragment, useState, useCallback } from 'react';
-import type { ComponentType } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type { RenderLabDependencies } from '../../common/components/benchmark';
+import { handleDialogTab, keepFocusInsideDialog, restoreDialogOpener } from '../../common/components/dialog';
+import RenderLab from './RenderLab';
+import TaskWorkbench from './TaskWorkbench';
 
-import VectorImage from './VectorImage';
-import Counter from './Counter';
-import WindowEvent from './WindowEvent';
-import Benchmark from './Benchmark';
-
-import { useShowStore } from '../store/showStore';
-
-const componentsMap: Record<string, ComponentType> = {
-    VectorImage,
-    Counter,
-    WindowEvent,
-    Benchmark,
-};
-
-interface Props {
-    msg: string;
+export interface ModalHandle {
+    open(source: HTMLElement): void;
+    close(restoreFocus?: boolean): void;
 }
 
-export default function Modal(props: Props) {
-    const [currentView, setCurrentView] = useState('VectorImage');
-    const ComponentToRender = componentsMap[currentView];
-    const { msg } = props;
-    const close = useShowStore(state => state.close);
+interface ModalProps {
+    readonly nickname: string;
+    readonly dependencies: RenderLabDependencies;
+    readonly onExpandedChange: (expanded: boolean) => void;
+}
 
-    const _close = useCallback((event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-        event.stopPropagation();
-        if (event.target === event.currentTarget) {
-            close();
+const Modal = forwardRef<ModalHandle, ModalProps>(function Modal({ nickname, dependencies, onExpandedChange }, ref) {
+    const dialogRef = useRef<HTMLDialogElement>(null);
+    const openerRef = useRef<HTMLElement | null>(null);
+    const [activeTab, setActiveTab] = useState<'task' | 'render'>('task');
+    const [opened, setOpened] = useState(false);
+
+    const focusGuard = useCallback((event: FocusEvent): void => {
+        if (dialogRef.current !== null) keepFocusInsideDialog(event, dialogRef.current);
+    }, []);
+
+    const close = useCallback((restoreFocus = true): void => {
+        const opener = openerRef.current;
+        setOpened(false);
+        setActiveTab('task');
+        document.removeEventListener('focusin', focusGuard, true);
+        if (dialogRef.current?.open) dialogRef.current.close();
+        onExpandedChange(false);
+        openerRef.current = null;
+        if (restoreFocus) restoreDialogOpener(opener);
+    }, [focusGuard, onExpandedChange]);
+
+    useImperativeHandle(ref, () => ({
+        open(source) {
+            openerRef.current = source;
+            setOpened(true);
+            setActiveTab('task');
+            dialogRef.current?.showModal();
+            document.addEventListener('focusin', focusGuard, true);
+            onExpandedChange(true);
+            queueMicrotask(() => document.getElementById(`ft-${nickname}-tab-task`)?.focus());
+        },
+        close,
+    }), [close, focusGuard, nickname, onExpandedChange]);
+
+    useEffect(() => () => close(false), [close]);
+
+    function selectTab(tab: 'task' | 'render', focus = true): void {
+        setActiveTab(tab);
+        if (focus) queueMicrotask(() => document.getElementById(`ft-${nickname}-tab-${tab}`)?.focus());
+    }
+
+    function onTabKey(event: React.KeyboardEvent): void {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+            event.preventDefault();
+            selectTab(activeTab === 'task' ? 'render' : 'task');
+        } else if (event.key === 'Home' || event.key === 'End') {
+            event.preventDefault();
+            selectTab(event.key === 'Home' ? 'task' : 'render');
         }
-    }, [close]);
+    }
+
     return (
-        <Fragment>
-            <div className='framework-test-modal-mask' onClick={_close}>
-                <div className='framework-test-modal-container'>
-                    <span>
-                        <button className='framework-test-modal-close-button' onClick={close}>
-                            &times;
-                        </button>
-                    </span>
-
-                    <div className='block'>
-                        <div className='title is-1 header-framework-test-react'>{msg}</div>
-
-                        <div className='tabs is-centered is-toggle is-toggle-rounded'>
-                            <ul>
-                                <li>
-                                    <button className={currentView === 'VectorImage' ? 'button button-framework-test-react' : 'button'} onClick={() => setCurrentView('VectorImage')}>
-                                        Vector Image
-                                    </button>
-                                </li>
-                                <li>
-                                    <button className={currentView === 'Counter' ? 'button button-framework-test-react' : 'button'} onClick={() => setCurrentView('Counter')}>
-                                        Counter
-                                    </button>
-                                </li>
-                                <li>
-                                    <button className={currentView === 'WindowEvent' ? 'button button-framework-test-react' : 'button'} onClick={() => setCurrentView('WindowEvent')}>
-                                        Window Event
-                                    </button>
-                                </li>
-                                <li>
-                                    <button className={currentView === 'Benchmark' ? 'button button-framework-test-react' : 'button'} onClick={() => setCurrentView('Benchmark')}>
-                                        Benchmark
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                        <ComponentToRender />
-                    </div>
-                </div>
+        <dialog
+            ref={dialogRef}
+            className='ft-showcase-dialog'
+            aria-labelledby={`ft-${nickname}-dialog-title`}
+            tabIndex={-1}
+            data-ft-role='dialog'
+            onCancel={event => { event.preventDefault(); close(); }}
+            onClick={event => { if (event.target === event.currentTarget) close(); }}
+            onKeyDown={event => { if (dialogRef.current !== null) handleDialogTab(event.nativeEvent, dialogRef.current); }}
+        >
+            <div className='ft-showcase-header'>
+                <h2 id={`ft-${nickname}-dialog-title`}>Component lab</h2>
+                <button className='ft-showcase-button' type='button' aria-label='Close component lab' onClick={() => close()}>Close</button>
             </div>
-        </Fragment>
+            <div className='ft-showcase-tabs' role='tablist' aria-label='Component lab sections' onKeyDown={onTabKey}>
+                <button id={`ft-${nickname}-tab-task`} className='ft-showcase-tab' data-ft-role='tab-task' role='tab' type='button' aria-selected={activeTab === 'task'} aria-controls={`ft-${nickname}-panel-task`} tabIndex={activeTab === 'task' ? 0 : -1} onClick={() => selectTab('task', false)}>Task</button>
+                <button id={`ft-${nickname}-tab-render`} className='ft-showcase-tab' data-ft-role='tab-render' role='tab' type='button' aria-selected={activeTab === 'render'} aria-controls={`ft-${nickname}-panel-render`} tabIndex={activeTab === 'render' ? 0 : -1} onClick={() => selectTab('render', false)}>Render</button>
+            </div>
+            {opened && (activeTab === 'task' ? (
+                <div id={`ft-${nickname}-panel-task`} role='tabpanel' aria-labelledby={`ft-${nickname}-tab-task`} aria-describedby={`ft-${nickname}-task-description`}>
+                    <TaskWorkbench nickname={nickname} />
+                </div>
+            ) : (
+                <div id={`ft-${nickname}-panel-render`} role='tabpanel' aria-labelledby={`ft-${nickname}-tab-render`} aria-describedby={`ft-${nickname}-render-description`}>
+                    <RenderLab nickname={nickname} dependencies={dependencies} />
+                </div>
+            ))}
+        </dialog>
     );
-}
+});
+
+export default Modal;

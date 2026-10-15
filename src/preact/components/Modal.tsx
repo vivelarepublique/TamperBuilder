@@ -1,75 +1,43 @@
-import type { JSX } from 'preact';
-import { useState, useCallback } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import type { RenderLabDependencies } from '../../common/components/benchmark';
+import { handleDialogTab, keepFocusInsideDialog, restoreDialogOpener } from '../../common/components/dialog';
+import type { PreactModel } from '../signal/rootModel';
+import RenderLab from './RenderLab';
+import TaskWorkbench from './TaskWorkbench';
 
-import VectorImage from './VectorImage';
-import Counter from './Counter';
-import WindowEvent from './WindowEvent';
-import Benchmark from './Benchmark';
+export default function Modal({ nickname, dependencies, model, opener }: { readonly nickname: string; readonly dependencies: RenderLabDependencies; readonly model: PreactModel; readonly opener: { current: HTMLButtonElement | null } }) {
+    const dialogRef = useRef<HTMLDialogElement>(null);
+    const [activeTab, setActiveTab] = useState<'task' | 'render'>('task');
+    const open = model.open.value;
 
-import { close } from '../signal/showSignal';
+    useEffect(() => {
+        if (!open || dialogRef.current === null) return;
+        const dialog = dialogRef.current;
+        const openerElement = opener.current;
+        const focusGuard = (event: FocusEvent) => keepFocusInsideDialog(event, dialog);
+        dialog.showModal();
+        document.addEventListener('focusin', focusGuard, true);
+        queueMicrotask(() => document.getElementById(`ft-${nickname}-tab-task`)?.focus());
+        return () => {
+            document.removeEventListener('focusin', focusGuard, true);
+            if (dialog.open) dialog.close();
+            restoreDialogOpener(openerElement);
+        };
+    }, [nickname, open, opener]);
 
-const componentsMap: Record<string, () => JSX.Element> = {
-    VectorImage,
-    Counter,
-    WindowEvent,
-    Benchmark,
-};
+    function close(): void { setActiveTab('task'); model.closeLab(); }
+    function selectTab(tab: 'task' | 'render', focus = true): void { setActiveTab(tab); if (focus) queueMicrotask(() => document.getElementById(`ft-${nickname}-tab-${tab}`)?.focus()); }
+    function onTabKey(event: KeyboardEvent): void {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); selectTab(activeTab === 'task' ? 'render' : 'task'); }
+        else if (event.key === 'Home' || event.key === 'End') { event.preventDefault(); selectTab(event.key === 'Home' ? 'task' : 'render'); }
+    }
 
-interface Props {
-    msg: string;
-}
-
-export default function Modal(props: Props) {
-    const [currentView, setCurrentView] = useState('VectorImage');
-    const ComponentToRender = componentsMap[currentView];
-    const { msg } = props;
-
-    const _close = useCallback((event: Event) => {
-        event.stopPropagation();
-        if (event.target === event.currentTarget) {
-            close();
-        }
-    }, []);
-
-    return (
-        <div class='framework-test-modal-mask' onClick={_close}>
-            <div class='framework-test-modal-container'>
-                <span>
-                    <button class='framework-test-modal-close-button' onClick={close}>
-                        &times;
-                    </button>
-                </span>
-
-                <div class='block'>
-                    <div class='title is-1 header-framework-test-preact'>{msg}</div>
-
-                    <div class='tabs is-centered is-toggle is-toggle-rounded'>
-                        <ul>
-                            <li>
-                                <button class={currentView === 'VectorImage' ? 'button button-framework-test-preact' : 'button'} onClick={() => setCurrentView('VectorImage')}>
-                                    Vector Image
-                                </button>
-                            </li>
-                            <li>
-                                <button class={currentView === 'Counter' ? 'button button-framework-test-preact' : 'button'} onClick={() => setCurrentView('Counter')}>
-                                    Counter
-                                </button>
-                            </li>
-                            <li>
-                                <button class={currentView === 'WindowEvent' ? 'button button-framework-test-preact' : 'button'} onClick={() => setCurrentView('WindowEvent')}>
-                                    Window Event
-                                </button>
-                            </li>
-                            <li>
-                                <button class={currentView === 'Benchmark' ? 'button button-framework-test-preact' : 'button'} onClick={() => setCurrentView('Benchmark')}>
-                                    Benchmark
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                    <ComponentToRender />
-                </div>
-            </div>
+    return <dialog ref={dialogRef} class='ft-showcase-dialog' aria-labelledby={`ft-${nickname}-dialog-title`} tabIndex={-1} data-ft-role='dialog' onCancel={event => { event.preventDefault(); close(); }} onClick={event => { if (event.target === event.currentTarget) close(); }} onKeyDown={event => { if (dialogRef.current) handleDialogTab(event, dialogRef.current); }}>
+        <div class='ft-showcase-header'><h2 id={`ft-${nickname}-dialog-title`}>Component lab</h2><button class='ft-showcase-button' type='button' aria-label='Close component lab' onClick={close}>Close</button></div>
+        <div class='ft-showcase-tabs' role='tablist' aria-label='Component lab sections' onKeyDown={onTabKey}>
+            <button id={`ft-${nickname}-tab-task`} class='ft-showcase-tab' data-ft-role='tab-task' role='tab' type='button' aria-selected={activeTab === 'task'} aria-controls={`ft-${nickname}-panel-task`} tabIndex={activeTab === 'task' ? 0 : -1} onClick={() => selectTab('task', false)}>Task</button>
+            <button id={`ft-${nickname}-tab-render`} class='ft-showcase-tab' data-ft-role='tab-render' role='tab' type='button' aria-selected={activeTab === 'render'} aria-controls={`ft-${nickname}-panel-render`} tabIndex={activeTab === 'render' ? 0 : -1} onClick={() => selectTab('render', false)}>Render</button>
         </div>
-    );
+        {open && (activeTab === 'task' ? <div id={`ft-${nickname}-panel-task`} role='tabpanel' aria-labelledby={`ft-${nickname}-tab-task`} aria-describedby={`ft-${nickname}-task-description`}><TaskWorkbench nickname={nickname} model={model} /></div> : <div id={`ft-${nickname}-panel-render`} role='tabpanel' aria-labelledby={`ft-${nickname}-tab-render`} aria-describedby={`ft-${nickname}-render-description`}><RenderLab nickname={nickname} dependencies={dependencies} /></div>)}
+    </dialog>;
 }

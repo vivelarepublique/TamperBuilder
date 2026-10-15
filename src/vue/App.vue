@@ -1,27 +1,32 @@
 <script setup lang="ts">
     import { ref } from 'vue';
+    import type { RenderLabDependencies } from '../common/components/benchmark';
+    import vueLogo from '../assets/svg/vue.svg';
     import Modal from './components/Modal.vue';
-    import { storeToRefs } from 'pinia';
-    import { useShowStore } from './store/showStore';
 
-    const showStore = useShowStore();
-    const { show } = storeToRefs(showStore);
-    const { open } = showStore;
+    defineProps<{ nickname: string; dependencies?: RenderLabDependencies }>();
+    const modal = ref<InstanceType<typeof Modal> | null>(null);
+    const launcher = ref<HTMLButtonElement | null>(null);
+    const expanded = ref(false);
 
-    const focus = ref(false);
+    function open(): void {
+        if (launcher.value !== null) void modal.value?.open(launcher.value);
+    }
 </script>
 
 <template>
-    <button id="framework-test-vue-modal" class="button framework-test-modal-switch" @click="open" @mouseenter="focus = true" @mouseleave="focus = false">
-        <span v-if="focus">More</span>
-        <img src="../assets/svg/vue.svg" class="ft-button-logo" alt="Vue logo">
+    <button
+        ref="launcher"
+        class="ft-showcase-launcher"
+        data-ft-role="launcher"
+        type="button"
+        :aria-label="`Open Vue component lab`"
+        aria-haspopup="dialog"
+        :aria-expanded="expanded"
+        @click="open"
+    >
+        <img :src="vueLogo" class="ft-showcase-launcher-image framework-test-logo-animation" alt="" aria-hidden="true">
+        <span class="ft-showcase-launcher-label">Open</span>
     </button>
-    <Modal v-if="show" msg="Welcome Vue" />
+    <Modal ref="modal" :nickname="nickname" :dependencies="dependencies" @expanded="expanded = $event" />
 </template>
-
-<style>
-    #framework-test-vue-modal {
-        top: 10%;
-        background-color: var(--ft-border-color-vue);
-    }
-</style>

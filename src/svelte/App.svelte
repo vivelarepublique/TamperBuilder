@@ -1,26 +1,13 @@
 <script lang="ts">
     import svelteLogo from '../assets/svg/svelte.svg';
+    import type { RenderLabDependencies } from '../common/components/benchmark';
     import Modal from './components/Modal.svelte';
-
-    let focus = $state(false);
-    import { show, open } from './store/showStore';
+    import { createWorkbenchModel } from './store/workbench.svelte';
+    let { nickname, dependencies }: { nickname: string; dependencies: RenderLabDependencies } = $props();
+    const model = createWorkbenchModel();
+    let open = $state(false);
+    let launcher = $state<HTMLButtonElement>();
 </script>
 
-<main>
-    <button id="framework-test-svelte-modal" class="button framework-test-modal-switch" onclick={() => open()} onmouseenter={() => focus = true} onmouseleave={() => focus = false}>
-        {#if focus}
-            <span>More</span>
-        {/if}
-        <img src={svelteLogo} class="ft-button-logo" alt="Svelte logo" />
-    </button>
-    {#if $show}
-        <Modal msg="Welcome Svelte" />
-    {/if}
-</main>
-
-<style>
-    #framework-test-svelte-modal {
-        top: 50%;
-        background-color: var(--ft-border-color-svelte);
-    }
-</style>
+<button bind:this={launcher} class="ft-showcase-launcher" data-ft-role="launcher" type="button" aria-label="Open Svelte component lab" aria-haspopup="dialog" aria-expanded={open} onclick={() => open = true}><img src={svelteLogo} class="ft-showcase-launcher-image framework-test-logo-animation" alt="" aria-hidden="true"><span class="ft-showcase-launcher-label">Open</span></button>
+{#if open && launcher}<Modal {nickname} {dependencies} {model} opener={launcher} onclose={() => open = false} />{/if}

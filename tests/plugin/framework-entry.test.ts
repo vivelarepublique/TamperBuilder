@@ -31,6 +31,7 @@ describe('framework virtual entry', () => {
             },
         ]);
         const target = document.createElement('div');
+        target.id = 'demoApp';
 
         expect(code).toContain('const divFrameworkNicknames = ["demo"]');
         expect(code).toContain('() => void mountFramework0(frameworkTargets[0])');

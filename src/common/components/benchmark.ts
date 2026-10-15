@@ -235,26 +235,3 @@ export const browserRenderLabDependencies: RenderLabDependencies = {
     },
     runScenario: runRenderScenario,
 };
-
-/** @deprecated Removed with the legacy framework benchmark components. */
-export interface RandomColor {
-    readonly backgroundColor: string;
-    readonly color: string;
-    readonly id: number;
-}
-
-/** @deprecated Removed with the legacy framework benchmark components. */
-export function generateRandomColor(id: number): RandomColor {
-    const color = Math.abs(Math.imul(id + 1, 2_654_435_761)) % 0x1000000;
-    const backgroundColor = Math.abs(Math.imul(id + 1, 1_597_334_677)) % 0x1000000;
-    return { id, color: `#${color.toString(16).padStart(6, '0')}`, backgroundColor: `#${backgroundColor.toString(16).padStart(6, '0')}` };
-}
-
-/** @deprecated Removed with the legacy framework benchmark components. */
-export function measureRenderTime(renderFunction: (renderCount: number) => void, renderCount: number, recordFunction: (time: number) => void): void {
-    const startTime = performance.now();
-    requestAnimationFrame(() => {
-        renderFunction(renderCount);
-        requestAnimationFrame(() => recordFunction(performance.now() - startTime));
-    });
-}

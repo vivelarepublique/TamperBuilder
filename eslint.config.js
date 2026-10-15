@@ -131,7 +131,7 @@ export default [
         },
     },
     {
-        files: ['src/vue/components/{Benchmark,Counter,Modal}.vue'],
+        files: ['src/vue/components/Modal.vue'],
         rules: {
             // These showcase component names intentionally match their cross-framework peers.
             'vue/multi-word-component-names': 'off',

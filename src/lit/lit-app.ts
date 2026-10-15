@@ -1,62 +1,43 @@
-import { css, html, nothing } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-import { BaseComponent } from './extends/baseComponents';
-
-import litLogo from '../assets/svg/lit.svg';
-
 import { provide } from '@lit/context';
-import { showStore, showContext } from './context/show-context';
-import { CounterStore, counterContext } from './context/counter-context';
-import { BenchmarkStore, benchmarkContext } from './context/benchmark-context';
-
+import { html } from 'lit';
+import { customElement, property, query, state } from 'lit/decorators.js';
+import litLogo from '../assets/svg/lit.svg';
+import type { RenderLabDependencies } from '../common/components/benchmark';
+import { clearCompletedTasks, createInitialTaskCollection, deleteTask, toggleTask } from '../common/components/workbench';
 import './components/lit-modal';
+import { LitWorkbenchCommandEvent, type LitWorkbenchValue, workbenchContext } from './context/workbench-context';
+import { BaseComponent } from './extends/baseComponents';
+import type { LitModal } from './components/lit-modal';
 
 @customElement('lit-app')
 export class LitApp extends BaseComponent {
-    @provide({ context: showContext })
-    showStore: showStore = new showStore();
+    @property() nickname = '';
+    @property({ attribute: false }) dependencies!: RenderLabDependencies;
+    @provide({ context: workbenchContext }) @state() workbench!: LitWorkbenchValue;
+    @state() private expanded = false;
+    @query('lit-modal') private modal?: LitModal;
 
-    @provide({ context: counterContext })
-    counterStore: CounterStore = new CounterStore();
-
-    @provide({ context: benchmarkContext })
-    benchmarkStore: BenchmarkStore = new BenchmarkStore();
-
-    @property({ type: Boolean })
-    _focus = false;
-
-    _open() {
-        this.showStore.open();
-        this.requestUpdate();
+    connectedCallback(): void {
+        if (this.workbench === undefined) {
+            const initial = createInitialTaskCollection();
+            this.workbench = Object.freeze({ tasks: initial.tasks, nextId: initial.nextId, dependencies: this.dependencies });
+        }
+        super.connectedCallback();
     }
 
-    handleShowChanged(event: CustomEvent) {
-        if (!event.detail) {
-            this.showStore.close();
-            this.requestUpdate();
+    private updateCollection(tasks: LitWorkbenchValue['tasks'], nextId = this.workbench.nextId): void { this.workbench = Object.freeze({ tasks, nextId, dependencies: this.dependencies }); }
+    private handleCommand(event: LitWorkbenchCommandEvent): void {
+        const command = event.detail;
+        switch (command.type) {
+            case 'add': this.updateCollection([...this.workbench.tasks, { id: this.workbench.nextId, title: command.title, priority: command.priority, completed: false }], this.workbench.nextId + 1); break;
+            case 'toggle': this.updateCollection(toggleTask(this.workbench.tasks, command.taskId)); break;
+            case 'delete': this.updateCollection(deleteTask(this.workbench.tasks, command.taskId)); break;
+            case 'clear-completed': this.updateCollection(clearCompletedTasks(this.workbench.tasks)); break;
+            case 'reset': { const initial = createInitialTaskCollection(); this.updateCollection(initial.tasks, initial.nextId); break; }
         }
     }
 
-    render() {
-        return html`
-            <button id="framework-test-lit-modal" class="button framework-test-modal-switch" @click=${this._open} @mouseover=${() => (this._focus = true)} @mouseout=${() => (this._focus = false)} part="button">
-                ${this._focus ? html`<span>More</span>` : nothing}
-                <img src=${litLogo} class="ft-button-logo" alt="Lit logo" />
-            </button>
-            ${this.showStore.show ? html`<lit-modal @show-changed=${this.handleShowChanged} .msg="${'Welcome Lit'}"></lit-modal>` : nothing}
-        `;
-    }
-
-    static styles = css`
-        #framework-test-lit-modal {
-            top: 40%;
-            background-color: var(--ft-border-color-lit);
-        }
-    `;
+    render() { return html`<button class="ft-showcase-launcher" data-ft-role="launcher" type="button" aria-label="Open Lit component lab" aria-haspopup="dialog" aria-expanded=${this.expanded} @click=${(event: MouseEvent) => { void this.modal?.open(event.currentTarget as HTMLElement); }}><img src=${litLogo} class="ft-showcase-launcher-image framework-test-logo-animation" alt="" aria-hidden="true"><span class="ft-showcase-launcher-label">Open</span></button><lit-modal .nickname=${this.nickname} @expanded-change=${(event: CustomEvent<boolean>) => { this.expanded = event.detail; }} @lit-workbench-command=${this.handleCommand}></lit-modal>`; }
 }
 
-declare global {
-    interface HTMLElementTagNameMap {
-        'lit-app': LitApp;
-    }
-}
+declare global { interface HTMLElementTagNameMap { 'lit-app': LitApp; } }
