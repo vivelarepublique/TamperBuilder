@@ -137,6 +137,7 @@ export default function TaskWorkbench({ nickname }: { readonly nickname: string 
                         <label key={option.value} htmlFor={`ft-${nickname}-task-status-${option.value}`}>
                             <input
                                 id={`ft-${nickname}-task-status-${option.value}`}
+                                className='ft-showcase-choice'
                                 type='radio'
                                 name={`ft-${nickname}-task-status`}
                                 value={option.value}
@@ -153,7 +154,7 @@ export default function TaskWorkbench({ nickname }: { readonly nickname: string 
                 <ul className='ft-showcase-task-list' data-ft-role='task-list'>
                     {visibleTasks.map(task => (
                         <li key={task.id} className='ft-showcase-task-row' data-ft-role='task-row'>
-                            <input type='checkbox' data-ft-role='task-toggle' data-task-id={task.id} checked={task.completed} aria-label={`${task.title} completed`} onChange={() => toggle(task.id)} />
+                            <input className='ft-showcase-choice' type='checkbox' data-ft-role='task-toggle' data-task-id={task.id} checked={task.completed} aria-label={`${task.title} completed`} onChange={() => toggle(task.id)} />
                             <span className='ft-showcase-task-title'>{task.title}</span>
                             <span>{TASK_PRIORITIES.find(option => option.value === task.priority)?.label}</span>
                             <button className='ft-showcase-button' data-ft-role='task-delete' data-task-id={task.id} type='button' aria-label={`Delete task ${task.id}: ${task.title}`} onClick={() => remove(task.id)}>Delete</button>

@@ -135,10 +135,15 @@
         }
     }
 
+    function cancelActiveRun(): void {
+        if (activeRunId !== null) invalidateRun();
+    }
+
     function onVisibilityChange(): void {
         if (document.hidden && running.value) cancel();
     }
 
+    defineExpose({ cancelActiveRun });
     onMounted(() => {
         mounted = true;
         document.addEventListener('visibilitychange', onVisibilityChange);

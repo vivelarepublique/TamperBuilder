@@ -8,6 +8,7 @@
     const props = defineProps<{ nickname: string; dependencies?: RenderLabDependencies }>();
     const emit = defineEmits<{ expanded: [value: boolean] }>();
     const dialog = ref<HTMLDialogElement | null>(null);
+    const renderLab = ref<{ cancelActiveRun(): void } | null>(null);
     const activeTab = ref<'task' | 'render'>('task');
     const opened = ref(false);
     let opener: HTMLElement | null = null;
@@ -30,6 +31,7 @@
 
     function close(restoreFocus = true): void {
         const source = opener;
+        renderLab.value?.cancelActiveRun();
         opened.value = false;
         activeTab.value = 'task';
         document.removeEventListener('focusin', focusGuard, true);
@@ -40,6 +42,7 @@
     }
 
     function selectTab(tab: 'task' | 'render', focus = true): void {
+        if (activeTab.value === 'render' && tab !== 'render') renderLab.value?.cancelActiveRun();
         activeTab.value = tab;
         if (focus) void nextTick(() => document.getElementById(`ft-${props.nickname}-tab-${tab}`)?.focus());
     }
@@ -82,7 +85,7 @@
             <h2 :id="`ft-${nickname}-dialog-title`">Component lab</h2>
             <button class="ft-showcase-button" type="button" aria-label="Close component lab" @click="close()">Close</button>
         </div>
-        <div class="ft-showcase-tabs" role="tablist" aria-label="Component lab sections" @keydown="onTabKey">
+        <div class="ft-showcase-tabs" role="tablist" tabindex="-1" aria-label="Component lab sections" @keydown="onTabKey">
             <button
                 :id="`ft-${nickname}-tab-task`"
                 class="ft-showcase-tab"
@@ -126,7 +129,7 @@
             :aria-labelledby="`ft-${nickname}-tab-render`"
             :aria-describedby="`ft-${nickname}-render-description`"
         >
-            <RenderLab :nickname="nickname" :dependencies="dependencies" />
+            <RenderLab ref="renderLab" :nickname="nickname" :dependencies="dependencies" />
         </div>
     </dialog>
 </template>

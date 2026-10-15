@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -28,10 +30,39 @@ describe('Component Lab visual contract', () => {
         expect(css).toContain('@media (max-width: 599px)');
         expect(css).toContain('@media (max-width: 767px)');
         expect(css).toContain('@media (prefers-reduced-motion: reduce)');
+        expect(css).toContain('box-sizing: border-box');
+        expect(css).toContain('@keyframes framework-test-scale');
+        expect(css).toContain('#framework-test-launcher-rail .framework-test-logo-animation');
         expect(css).toContain('min-height: 44px');
         expect(css).toContain('max-width: calc(100vw - 32px)');
         expect(css).toContain(':focus-visible');
         expect(css).toContain('height: 240px');
+    });
+
+    it('keeps rendered controls and launcher images isolated from ordinary host rules at 390px', () => {
+        Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+        Object.defineProperty(window, 'innerHeight', { configurable: true, value: 844 });
+        const hostStyle = document.createElement('style');
+        hostStyle.textContent = 'input { appearance: auto; box-sizing: content-box; width: 900px; } img { display: inline; width: 900px; height: 900px; margin: 50px; padding: 50px; border: 20px solid red; } dialog { box-sizing: content-box; }';
+        const showcaseStyle = document.createElement('style');
+        showcaseStyle.textContent = css;
+        document.head.append(hostStyle, showcaseStyle);
+        document.body.innerHTML = '<div id="framework-test-launcher-rail"><button class="ft-showcase-launcher"><img class="ft-showcase-launcher-image framework-test-logo-animation"></button></div><dialog class="ft-showcase-dialog"><input class="ft-showcase-choice" type="checkbox"></dialog>';
+
+        const dialog = document.querySelector<HTMLDialogElement>('dialog')!;
+        const choice = document.querySelector<HTMLInputElement>('.ft-showcase-choice')!;
+        const image = document.querySelector<HTMLImageElement>('.ft-showcase-launcher-image')!;
+        expect(getComputedStyle(dialog).boxSizing).toBe('border-box');
+        expect(getComputedStyle(choice).boxSizing).toBe('border-box');
+        expect(getComputedStyle(choice).appearance).toBe('none');
+        expect([getComputedStyle(image).display, getComputedStyle(image).boxSizing, getComputedStyle(image).width, getComputedStyle(image).height]).toEqual([
+            'block', 'border-box', '24px', '24px',
+        ]);
+        expect(dialog.scrollWidth).toBeLessThanOrEqual(390);
+
+        hostStyle.remove();
+        showcaseStyle.remove();
+        document.body.replaceChildren();
     });
 
     it('keeps text and focus tokens above required contrast', () => {

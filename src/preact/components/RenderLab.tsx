@@ -39,7 +39,7 @@ function statusCopy(status: RenderStatus): string {
     }
 }
 
-export default function RenderLab({ nickname, dependencies }: { readonly nickname: string; readonly dependencies: RenderLabDependencies }) {
+export default function RenderLab({ nickname, dependencies, registerCancel }: { readonly nickname: string; readonly dependencies: RenderLabDependencies; readonly registerCancel: (cancel: (() => void) | null) => void }) {
     const model = useMemo(createRenderModel, []);
     const runSequenceRef = useRef(0);
     const activeRunIdRef = useRef<number | null>(null);
@@ -59,6 +59,15 @@ export default function RenderLab({ nickname, dependencies }: { readonly nicknam
         invalidateRun();
         model.setCanceled();
     }, [invalidateRun, model]);
+
+    const cancelActiveRun = useCallback(() => {
+        if (activeRunIdRef.current !== null) invalidateRun();
+    }, [invalidateRun]);
+
+    useEffect(() => {
+        registerCancel(cancelActiveRun);
+        return () => registerCancel(null);
+    }, [cancelActiveRun, registerCancel]);
 
     useEffect(() => {
         mountedRef.current = true;

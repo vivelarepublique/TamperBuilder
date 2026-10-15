@@ -155,6 +155,7 @@
                 <label v-for="option in TASK_FILTERS" :key="option.value" :for="`ft-${nickname}-task-status-${option.value}`">
                     <input
                         :id="`ft-${nickname}-task-status-${option.value}`"
+                        class="ft-showcase-choice"
                         type="radio"
                         :name="`ft-${nickname}-task-status`"
                         :value="option.value"
@@ -177,6 +178,7 @@
         <ul v-if="visibleTasks.length > 0" class="ft-showcase-task-list" data-ft-role="task-list">
             <li v-for="task in visibleTasks" :key="task.id" class="ft-showcase-task-row" data-ft-role="task-row">
                 <input
+                    class="ft-showcase-choice"
                     type="checkbox"
                     data-ft-role="task-toggle"
                     :data-task-id="task.id"

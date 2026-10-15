@@ -181,6 +181,54 @@ describe('deterministic render scenario', () => {
         expect(scheduler.timers.size).toBe(0);
     });
 
+    it('cleans the abort listener when timer setup throws', async () => {
+        const failure = new Error('timer setup failed');
+        const scheduler = new FakeScheduler();
+        scheduler.setTimer = () => { throw failure; };
+        const controller = new AbortController();
+        const removeListener = vi.spyOn(controller.signal, 'removeEventListener');
+        const { adapter } = createRecordingAdapter();
+
+        await expect(runRenderScenario({ size: 250, adapter, scheduler, signal: controller.signal })).rejects.toBe(failure);
+        expect(removeListener).toHaveBeenCalledWith('abort', expect.any(Function));
+        expect(scheduler.frames.size).toBe(0);
+        expect(scheduler.timers.size).toBe(0);
+    });
+
+    it('handles a timer callback that fires synchronously during setup', async () => {
+        const scheduler = new FakeScheduler();
+        scheduler.setTimer = callback => {
+            callback();
+            return 1 as unknown as ReturnType<typeof setTimeout>;
+        };
+        const { adapter } = createRecordingAdapter();
+
+        await expect(runRenderScenario({ size: 250, adapter, scheduler, signal: new AbortController().signal })).rejects.toEqual(
+            expect.objectContaining({ name: 'BenchmarkTimeoutError', phase: 'warmup-create' }),
+        );
+        expect(scheduler.clearedTimers).toHaveLength(1);
+        expect(scheduler.frames.size).toBe(0);
+    });
+
+    it('handles a frame callback that fires synchronously during setup', async () => {
+        const scheduler = new FakeScheduler();
+        scheduler.requestFrame = callback => {
+            scheduler.time += 1;
+            callback(scheduler.time);
+            return scheduler.nextHandle++;
+        };
+        const { adapter } = createRecordingAdapter();
+
+        await expect(runRenderScenario({ size: 250, adapter, scheduler, signal: new AbortController().signal })).resolves.toEqual({
+            createMs: 1,
+            updateMs: 1,
+            removeMs: 1,
+            remainingRows: 215,
+        });
+        expect(scheduler.frames.size).toBe(0);
+        expect(scheduler.timers.size).toBe(0);
+    });
+
     it('formats invariant durations and identifies timeout errors', () => {
         expect(formatMilliseconds(0)).toBe('0.0 ms');
         expect(formatMilliseconds(1.25)).toBe('1.3 ms');

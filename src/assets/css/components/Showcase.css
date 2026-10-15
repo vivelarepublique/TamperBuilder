@@ -33,7 +33,7 @@
 .ft-showcase-dialog .ft-showcase-input,
 .ft-showcase-dialog .ft-showcase-select,
 .ft-showcase-dialog .ft-showcase-progress,
-.ft-showcase-dialog .ft-showcase-image {
+.ft-showcase-dialog .ft-showcase-choice {
     box-sizing: border-box;
     appearance: none;
     border: 1px solid var(--ft-showcase-border);
@@ -90,13 +90,40 @@
 }
 
 #framework-test-launcher-rail .ft-showcase-launcher-image {
+    display: block;
+    box-sizing: border-box;
     width: 24px;
+    min-width: 24px;
+    max-width: 24px;
     height: 24px;
+    min-height: 24px;
+    max-height: 24px;
     flex: 0 0 24px;
+    margin: 0;
+    padding: 0;
     border: 0;
+    border-radius: 0;
+    background: transparent;
+    object-fit: contain;
+}
+
+#framework-test-launcher-rail .framework-test-logo-animation {
+    animation: framework-test-scale 5s linear infinite;
+}
+
+@keyframes framework-test-scale {
+    from,
+    to {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(0.5);
+    }
 }
 
 .ft-showcase-dialog {
+    box-sizing: border-box;
     width: min(960px, calc(100vw - 32px));
     max-width: calc(100vw - 32px);
     max-height: calc(100dvh - 32px);
@@ -167,6 +194,53 @@
     min-height: 44px;
     padding: 8px 10px;
     background: var(--ft-showcase-surface);
+}
+
+.ft-showcase-dialog .ft-showcase-choice {
+    display: inline-grid;
+    width: 20px;
+    min-width: 20px;
+    max-width: 20px;
+    height: 20px;
+    min-height: 20px;
+    max-height: 20px;
+    margin: 0 6px 0 0;
+    padding: 0;
+    place-content: center;
+    vertical-align: middle;
+    background: var(--ft-showcase-surface);
+    cursor: pointer;
+}
+
+.ft-showcase-dialog .ft-showcase-choice[type='radio'] {
+    border-radius: 50%;
+}
+
+.ft-showcase-dialog .ft-showcase-choice::before {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--ft-showcase-accent);
+    content: '';
+    transform: scale(0);
+}
+
+.ft-showcase-dialog .ft-showcase-choice[type='radio']::before {
+    border-radius: 50%;
+}
+
+.ft-showcase-dialog .ft-showcase-choice:checked::before {
+    transform: scale(1);
+}
+
+.ft-showcase-dialog .ft-showcase-choice:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.ft-showcase-dialog .ft-showcase-choice:focus-visible {
+    outline: 3px solid var(--ft-showcase-focus);
+    outline-offset: 2px;
 }
 
 .ft-showcase-dialog .ft-showcase-error,
@@ -311,9 +385,9 @@
 
 @media (prefers-reduced-motion: reduce) {
     #framework-test-launcher-rail .ft-showcase-launcher,
+    #framework-test-launcher-rail .framework-test-logo-animation,
     .ft-showcase-dialog,
-    .ft-showcase-dialog .ft-showcase-button,
-    .ft-showcase-dialog .framework-test-logo-animation {
+    .ft-showcase-dialog .ft-showcase-button {
         animation: none;
         transition: none;
     }

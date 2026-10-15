@@ -79,11 +79,15 @@ function runPhase<T>(phase: BenchmarkPhase, scheduler: BenchmarkScheduler, signa
     if (signal.aborted) return Promise.reject(aborted());
     return new Promise<T>((resolve, reject) => {
         let settled = false;
+        let timer: ReturnType<typeof setTimeout> | null = null;
         const frameHandles = new Set<number>();
         const frameRejectors = new Set<(error: unknown) => void>();
 
         const cleanup = () => {
-            scheduler.clearTimer(timer);
+            if (timer !== null) {
+                scheduler.clearTimer(timer);
+                timer = null;
+            }
             for (const handle of frameHandles) scheduler.cancelFrame(handle);
             frameHandles.clear();
             signal.removeEventListener('abort', onAbort);
@@ -110,10 +114,12 @@ function runPhase<T>(phase: BenchmarkPhase, scheduler: BenchmarkScheduler, signa
                     return;
                 }
                 frameRejectors.add(rejectFrame);
-                let handle: number;
+                let handle: number | null = null;
+                let completedSynchronously = false;
                 try {
-                    handle = scheduler.requestFrame(() => {
-                        frameHandles.delete(handle);
+                    const requestedHandle = scheduler.requestFrame(() => {
+                        completedSynchronously = true;
+                        if (handle !== null) frameHandles.delete(handle);
                         frameRejectors.delete(rejectFrame);
                         if (signal.aborted) {
                             rejectFrame(aborted());
@@ -121,7 +127,8 @@ function runPhase<T>(phase: BenchmarkPhase, scheduler: BenchmarkScheduler, signa
                         }
                         resolveFrame();
                     });
-                    frameHandles.add(handle);
+                    handle = requestedHandle;
+                    if (!completedSynchronously) frameHandles.add(requestedHandle);
                 } catch (error) {
                     frameRejectors.delete(rejectFrame);
                     // Scheduler failures must preserve their original rejection value.
@@ -131,7 +138,14 @@ function runPhase<T>(phase: BenchmarkPhase, scheduler: BenchmarkScheduler, signa
             });
 
         signal.addEventListener('abort', onAbort, { once: true });
-        const timer = scheduler.setTimer(() => fail(new BenchmarkTimeoutError(phase)), timeoutMilliseconds);
+        try {
+            const createdTimer = scheduler.setTimer(() => fail(new BenchmarkTimeoutError(phase)), timeoutMilliseconds);
+            if (settled) scheduler.clearTimer(createdTimer);
+            else timer = createdTimer;
+        } catch (error) {
+            fail(error);
+            return;
+        }
         void work(waitForFrame).then(
             value => finish(() => resolve(value)),
             error => fail(error),

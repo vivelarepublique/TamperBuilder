@@ -116,6 +116,8 @@ for (const factory of harnessFactories) {
                 expect(launcher.getAttribute('aria-label')).toMatch(/^Open .+ component lab$/);
                 expect(launcher.getAttribute('aria-haspopup')).toBe('dialog');
                 expect(launcher.getAttribute('aria-expanded')).toBe('true');
+                expect(launcher.querySelector('img')?.classList.contains('ft-showcase-launcher-image')).toBe(true);
+                expect(dialog.querySelector('[role="tablist"]')?.getAttribute('tabindex')).toBe('-1');
                 expect(dialog.open).toBe(true);
                 expect(Array.from(dialog.children, child => child.getAttribute('data-ft-role') ?? child.getAttribute('role'))).toEqual([
                     null,
@@ -134,6 +136,13 @@ for (const factory of harnessFactories) {
                 expect(directRoles(getByRole(workbench, 'task-form'))).toEqual(['task-title-field', 'task-priority-field', 'task-add']);
                 expect(directRoles(getByRole(workbench, 'task-filters'))).toEqual(['task-search-field', 'task-filter']);
                 expect(directRoles(getByRole(workbench, 'task-actions'))).toEqual(['task-clear', 'task-reset']);
+                expect(Array.from(target.querySelectorAll<HTMLElement>('[data-ft-role]'), element => element.dataset.ftRole)).toEqual([
+                    'launcher', 'dialog', 'tab-task', 'tab-render', 'task-workbench', 'task-description', 'task-form',
+                    'task-title-field', 'task-title', 'task-title-error-slot', 'task-priority-field', 'task-priority',
+                    'task-priority-error-slot', 'task-add', 'task-filters', 'task-search-field', 'task-search', 'task-filter',
+                    'task-summary', 'task-progress', 'task-list', 'task-row', 'task-toggle', 'task-delete', 'task-row',
+                    'task-toggle', 'task-delete', 'task-row', 'task-toggle', 'task-delete', 'task-actions', 'task-clear', 'task-reset',
+                ]);
                 expect(getByRole<HTMLFormElement>(workbench, 'task-form').noValidate).toBe(true);
                 expect(getByRole(workbench, 'task-description').textContent).toBe('Add, filter, and update a deterministic task list.');
                 expect(getByRole(workbench, 'task-summary').textContent).toBe('2 open · 1 done · 3 total');
@@ -150,6 +159,8 @@ for (const factory of harnessFactories) {
                 expect(panel.getAttribute('aria-describedby')).toBe(`ft-${nickname}-task-description`);
                 const radios = Array.from(workbench.querySelectorAll<HTMLInputElement>('input[type="radio"]'));
                 expect(radios.map(radio => radio.name)).toEqual(Array(3).fill(`ft-${nickname}-task-status`));
+                expect(radios.every(radio => radio.classList.contains('ft-showcase-choice'))).toBe(true);
+                expect(Array.from(workbench.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')).every(checkbox => checkbox.classList.contains('ft-showcase-choice'))).toBe(true);
                 const ids = Array.from(document.querySelectorAll<HTMLElement>('[id]'), element => element.id);
                 expect(new Set(ids).size).toBe(ids.length);
                 for (const attribute of ['aria-labelledby', 'aria-describedby']) {
@@ -158,6 +169,26 @@ for (const factory of harnessFactories) {
                     }
                 }
                 expect(document.getElementById(getByRole(target, 'tab-task').getAttribute('aria-controls') ?? '')).toBe(panel);
+                expect(document.activeElement).toBe(getByRole(target, 'tab-task'));
+            });
+        });
+
+        it('implements roving Arrow, Home, and End tab activation', async () => {
+            await withHarness(factory, async harness => {
+                await harness.mount();
+                const target = await openLab(harness);
+                const press = async (key: string) => perform(harness, () => {
+                    (document.activeElement as HTMLElement).dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+                });
+
+                await press('ArrowRight');
+                expect(document.activeElement).toBe(getByRole(target, 'tab-render'));
+                expect(getByRole(target, 'tab-render').getAttribute('aria-selected')).toBe('true');
+                await press('Home');
+                expect(document.activeElement).toBe(getByRole(target, 'tab-task'));
+                await press('End');
+                expect(document.activeElement).toBe(getByRole(target, 'tab-render'));
+                await press('ArrowLeft');
                 expect(document.activeElement).toBe(getByRole(target, 'tab-task'));
             });
         });
@@ -195,8 +226,41 @@ for (const factory of harnessFactories) {
                 expect(Array.from(target.querySelectorAll('.ft-showcase-task-title'), element => element.textContent)).toContain('Added item');
                 expect(document.activeElement).toBe(title);
 
+                await setValue(harness, title, 'Native enter path');
+                await perform(harness, () => form.requestSubmit());
+                expect(Array.from(target.querySelectorAll('.ft-showcase-task-title'), element => element.textContent)).toContain('Native enter path');
+                expect(document.activeElement).toBe(title);
+
                 await setValue(harness, getByRole<HTMLInputElement>(target, 'task-search'), '  review  ');
                 expect(Array.from(target.querySelectorAll('.ft-showcase-task-title'), element => element.textContent)).toEqual(['Review build output']);
+            });
+        });
+
+        it('recovers Toggle and Delete focus from the pre-action visible index', async () => {
+            await withHarness(factory, async harness => {
+                await harness.mount();
+                const target = await openLab(harness);
+                const chooseFilter = async (value: 'all' | 'open') => {
+                    const radio = target.querySelector<HTMLInputElement>(`input[type="radio"][value="${value}"]`)!;
+                    await perform(harness, () => {
+                        const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'checked');
+                        descriptor?.set?.call(radio, true);
+                        radio.dispatchEvent(new Event('change', { bubbles: true }));
+                        radio.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                    });
+                };
+
+                await chooseFilter('open');
+                const firstToggle = target.querySelector<HTMLInputElement>('[data-ft-role="task-toggle"][data-task-id="1"]')!;
+                firstToggle.focus();
+                await click(harness, firstToggle);
+                expect(document.activeElement).toBe(target.querySelector('[data-ft-role="task-toggle"][data-task-id="3"]'));
+
+                await chooseFilter('all');
+                const middleDelete = target.querySelector<HTMLButtonElement>('[data-ft-role="task-delete"][data-task-id="2"]')!;
+                middleDelete.focus();
+                await click(harness, middleDelete);
+                expect(document.activeElement).toBe(target.querySelector('[data-ft-role="task-delete"][data-task-id="3"]'));
             });
         });
 
@@ -351,38 +415,85 @@ for (const factory of harnessFactories) {
             });
         });
 
-        it('cancels active runs, rejects stale adapter writes, and aborts before unmount removes DOM', async () => {
+        it('aborts before tab/close teardown, isolates immediate reruns, and removes listeners', async () => {
             await withHarness(factory, async harness => {
-                let resolveRun: ((metrics: BenchmarkMetrics) => void) | undefined;
-                let captured: Parameters<RenderLabDependencies['runScenario']>[0] | undefined;
-                const deferredRunner: RenderLabDependencies['runScenario'] = options => {
-                    captured = options;
-                    return new Promise(resolve => { resolveRun = resolve; });
-                };
+                const runs: Array<{
+                    options: Parameters<RenderLabDependencies['runScenario']>[0];
+                    resolve: (metrics: BenchmarkMetrics) => void;
+                }> = [];
+                const deferredRunner: RenderLabDependencies['runScenario'] = options => new Promise(resolve => runs.push({ options, resolve }));
+                const removeListener = vi.spyOn(document, 'removeEventListener');
                 await harness.mount({ dependencies: dependencies(deferredRunner) });
                 const target = await openRender(harness);
-                await click(harness, getByRole(target, 'render-run'));
-                expect(getByRole(target, 'render-status').textContent).toBe('Running…');
-                expect(getByRole<HTMLSelectElement>(target, 'render-size').disabled).toBe(true);
-                expect(getByRole<HTMLButtonElement>(target, 'render-run').disabled).toBe(true);
-                expect(getByRole(target, 'render-secondary').textContent).toBe('Cancel');
-                await click(harness, getByRole(target, 'render-secondary'));
-                expect(captured?.signal.aborted).toBe(true);
-                expect(getByRole(target, 'render-status').textContent).toBe('Scenario canceled.');
-                captured?.adapter.replaceRows(finalRows);
-                resolveRun?.(successfulMetrics);
-                await harness.flush();
-                expect(target.querySelectorAll('[data-ft-role="render-row"]')).toHaveLength(0);
-                expect(getByRole(target, 'render-status').textContent).toBe('Scenario canceled.');
 
                 await click(harness, getByRole(target, 'render-run'));
-                const unmountSignal = captured?.signal;
+                let abortedBeforeTabCommit = false;
+                await perform(harness, () => {
+                    getByRole<HTMLButtonElement>(target, 'tab-task').click();
+                    abortedBeforeTabCommit = runs[0]?.options.signal.aborted === true;
+                });
+                expect(abortedBeforeTabCommit).toBe(true);
+                await perform(harness, () => {
+                    runs[0]?.options.adapter.replaceRows(finalRows);
+                    runs[0]?.resolve(successfulMetrics);
+                });
+                expect(target.querySelector('[data-ft-role="render-lab"]')).toBeNull();
+
+                await click(harness, getByRole(target, 'tab-render'));
+                await click(harness, getByRole(target, 'render-run'));
+                let abortedBeforeCloseCommit = false;
+                await perform(harness, () => {
+                    target.querySelector<HTMLButtonElement>('[aria-label="Close component lab"]')?.click();
+                    abortedBeforeCloseCommit = runs[1]?.options.signal.aborted === true;
+                });
+                expect(abortedBeforeCloseCommit).toBe(true);
+                await perform(harness, () => {
+                    runs[1]?.options.adapter.replaceRows(finalRows);
+                    runs[1]?.resolve(successfulMetrics);
+                });
+                expect(target.querySelector<HTMLDialogElement>('[data-ft-role="dialog"]')?.open ?? false).toBe(false);
+                expect(removeListener.mock.calls.some(([type]) => type === 'visibilitychange')).toBe(true);
+                expect(removeListener.mock.calls.some(([type]) => type === 'focusin')).toBe(true);
+
+                await openRender(harness);
+                await click(harness, getByRole(target, 'render-run'));
+                await click(harness, getByRole(target, 'render-secondary'));
+                expect(runs[2]?.options.signal.aborted).toBe(true);
+                await click(harness, getByRole(target, 'render-run'));
+                expect(runs).toHaveLength(4);
+                await perform(harness, () => {
+                    runs[2]?.options.adapter.replaceRows(finalRows);
+                    runs[2]?.resolve(successfulMetrics);
+                });
+                expect(getByRole(target, 'render-status').textContent).toBe('Running…');
+                expect(target.querySelectorAll('[data-ft-role="render-row"]')).toHaveLength(0);
+                await perform(harness, () => {
+                    runs[3]?.options.adapter.replaceRows(finalRows);
+                    runs[3]?.resolve(successfulMetrics);
+                });
+                expect(getByRole(target, 'render-status').textContent).toBe('Scenario complete.');
+
+                await click(harness, getByRole(target, 'render-run'));
+                const originalHidden = Object.getOwnPropertyDescriptor(document, 'hidden');
+                Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+                await perform(harness, () => document.dispatchEvent(new Event('visibilitychange')));
+                expect(runs[4]?.options.signal.aborted).toBe(true);
+                expect(getByRole(target, 'render-status').textContent).toBe('Scenario canceled.');
+                if (originalHidden === undefined) delete (document as Document & { hidden?: boolean }).hidden;
+                else Object.defineProperty(document, 'hidden', originalHidden);
+                runs[4]?.resolve(successfulMetrics);
+
+                await click(harness, getByRole(target, 'render-run'));
+                const unmountSignal = runs[5]?.options.signal;
                 const mountedTarget = harness.getTarget();
                 await harness.unmount();
                 expect(unmountSignal?.aborted).toBe(true);
                 expect(mountedTarget.isConnected).toBe(false);
                 expect(mountedTarget.childElementCount).toBe(0);
+                runs[5]?.options.adapter.replaceRows(finalRows);
+                runs[5]?.resolve(successfulMetrics);
                 await harness.unmount();
+                removeListener.mockRestore();
             });
         });
 

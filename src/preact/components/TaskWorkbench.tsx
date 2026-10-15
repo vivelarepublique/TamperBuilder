@@ -90,14 +90,14 @@ export default function TaskWorkbench({ nickname, model }: { readonly nickname: 
                 </div>
                 <fieldset data-ft-role='task-filter'>
                     <legend>Task status</legend>
-                    {TASK_FILTERS.map(option => <label key={option.value} htmlFor={`ft-${nickname}-task-status-${option.value}`}><input id={`ft-${nickname}-task-status-${option.value}`} type='radio' name={`ft-${nickname}-task-status`} value={option.value} checked={filter === option.value} onChange={event => { if (isTaskFilter(event.currentTarget.value)) setFilter(event.currentTarget.value); }} /> {option.label}</label>)}
+                    {TASK_FILTERS.map(option => <label key={option.value} htmlFor={`ft-${nickname}-task-status-${option.value}`}><input class='ft-showcase-choice' id={`ft-${nickname}-task-status-${option.value}`} type='radio' name={`ft-${nickname}-task-status`} value={option.value} checked={filter === option.value} onChange={event => { if (isTaskFilter(event.currentTarget.value)) setFilter(event.currentTarget.value); }} /> {option.label}</label>)}
                 </fieldset>
             </div>
             <p data-ft-role='task-summary'>{tasks.length - done} open · {done} done · {tasks.length} total</p>
             <progress class='ft-showcase-progress' data-ft-role='task-progress' aria-label='Completed tasks' max={tasks.length || 1} value={done} aria-valuetext={`${done} of ${tasks.length} tasks complete`} />
             {visibleTasks.length > 0 ? <ul class='ft-showcase-task-list' data-ft-role='task-list'>
                 {visibleTasks.map(task => <li key={task.id} class='ft-showcase-task-row' data-ft-role='task-row'>
-                    <input type='checkbox' data-ft-role='task-toggle' data-task-id={task.id} checked={task.completed} aria-label={`${task.title} completed`} onChange={() => toggle(task.id)} />
+                    <input class='ft-showcase-choice' type='checkbox' data-ft-role='task-toggle' data-task-id={task.id} checked={task.completed} aria-label={`${task.title} completed`} onChange={() => toggle(task.id)} />
                     <span class='ft-showcase-task-title'>{task.title}</span><span>{TASK_PRIORITIES.find(option => option.value === task.priority)?.label}</span>
                     <button class='ft-showcase-button' data-ft-role='task-delete' data-task-id={task.id} type='button' aria-label={`Delete task ${task.id}: ${task.title}`} onClick={() => remove(task.id)}>Delete</button>
                 </li>)}

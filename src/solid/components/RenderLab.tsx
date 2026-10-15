@@ -3,7 +3,7 @@ import { formatMilliseconds, isAbortError, isBenchmarkTimeoutError, type Benchma
 
 type RenderStatus = { readonly kind: 'idle' } | { readonly kind: 'running'; readonly runId: number } | { readonly kind: 'success' } | { readonly kind: 'startHidden' } | { readonly kind: 'canceled' } | { readonly kind: 'timeout'; readonly phase: BenchmarkPhase } | { readonly kind: 'error' };
 
-export default function RenderLab(props: { readonly nickname: string; readonly dependencies: RenderLabDependencies }) {
+export default function RenderLab(props: { readonly nickname: string; readonly dependencies: RenderLabDependencies; readonly registerCancel: (cancel: (() => void) | null) => void }) {
     const [size, setSize] = createSignal<BenchmarkSize>(1000);
     const [rows, setRows] = createSignal<readonly BenchmarkRow[]>([]);
     const [metrics, setMetrics] = createSignal<BenchmarkMetrics | null>(null);
@@ -44,7 +44,7 @@ export default function RenderLab(props: { readonly nickname: string; readonly d
             else { setStatus({ kind: 'error' }); console.error('Render lab scenario failed.', error); }
         } finally { if (activeRunId === runId && !activeController.signal.aborted && mounted) { activeRunId = null; controller = null; } }
     }
-    onMount(() => { mounted = true; const listener = () => { if (document.hidden && running()) cancel(); }; document.addEventListener('visibilitychange', listener); onCleanup(() => document.removeEventListener('visibilitychange', listener)); });
+    onMount(() => { mounted = true; props.registerCancel(() => { if (activeRunId !== null) invalidateRun(); }); const listener = () => { if (document.hidden && running()) cancel(); }; document.addEventListener('visibilitychange', listener); onCleanup(() => { document.removeEventListener('visibilitychange', listener); props.registerCancel(null); }); });
     onCleanup(() => { mounted = false; invalidateRun(); });
 
     return <section data-ft-role='render-lab'><p id={`ft-${props.nickname}-render-description`} data-ft-role='render-description'>Run one bounded create, update, and remove scenario.</p><p class='ft-showcase-muted' data-ft-role='render-disclaimer'>Results reflect one interaction on this page, device, and build. They are not a scientific cross-framework benchmark.</p>

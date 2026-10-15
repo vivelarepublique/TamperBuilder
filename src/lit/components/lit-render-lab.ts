@@ -23,12 +23,13 @@ export class LitRenderLab extends BaseComponent {
     private mounted = false;
     private reportedMissingContext = false;
 
-    connectedCallback(): void { super.connectedCallback(); this.mounted = true; document.addEventListener('visibilitychange', this.visibilityChanged); }
-    disconnectedCallback(): void { this.mounted = false; this.invalidateRun(); document.removeEventListener('visibilitychange', this.visibilityChanged); super.disconnectedCallback(); }
+    connectedCallback(): void { super.connectedCallback(); this.mounted = true; this.addEventListener('cancel-active-run', this.cancelRequested); document.addEventListener('visibilitychange', this.visibilityChanged); }
+    disconnectedCallback(): void { this.mounted = false; this.invalidateRun(); this.removeEventListener('cancel-active-run', this.cancelRequested); document.removeEventListener('visibilitychange', this.visibilityChanged); super.disconnectedCallback(); }
     protected firstUpdated(): void { if (this.workbench === undefined && !this.reportedMissingContext) { this.reportedMissingContext = true; console.error('Lit component state is unavailable.'); } }
 
     private get running(): boolean { return this.status.kind === 'running'; }
     private get strictInitial(): boolean { return this.size === 1000 && this.rows.length === 0 && this.metrics === null && this.status.kind === 'idle' && this.inputError === null; }
+    private readonly cancelRequested = () => this.cancelActiveRun();
     private readonly visibilityChanged = () => { if (document.hidden && this.running) this.cancel(); };
     private invalidateRun(): void { this.controller?.abort(); this.runSequence += 1; this.activeRunId = null; this.controller = null; }
     private cancel(): void { if (!this.running) return; this.invalidateRun(); this.rows = []; this.metrics = null; this.status = { kind: 'canceled' }; }
@@ -60,6 +61,10 @@ export class LitRenderLab extends BaseComponent {
             if (isBenchmarkTimeoutError(error)) { this.status = { kind: 'timeout', phase: error.phase }; console.warn('Render lab phase timed out.', { phase: error.phase, size: this.size }); }
             else { this.status = { kind: 'error' }; console.error('Render lab scenario failed.', error); }
         } finally { if (this.activeRunId === runId && !activeController.signal.aborted && this.mounted) { this.activeRunId = null; this.controller = null; } }
+    }
+
+    cancelActiveRun(): void {
+        if (this.activeRunId !== null) this.invalidateRun();
     }
 
     private statusCopy(): string { switch (this.status.kind) { case 'running': return 'Running…'; case 'success': return 'Scenario complete.'; case 'startHidden': return 'Keep this page visible, then try again.'; case 'canceled': return 'Scenario canceled.'; case 'timeout': return 'Scenario timed out. Try again or reset.'; case 'error': return 'Scenario could not complete.'; default: return ''; } }

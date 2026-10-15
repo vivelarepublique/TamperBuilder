@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import type { RenderLabDependencies } from '../../common/components/benchmark';
 import { handleDialogTab, keepFocusInsideDialog, restoreDialogOpener } from '../../common/components/dialog';
-import RenderLab from './RenderLab';
+import RenderLab, { type RenderLabHandle } from './RenderLab';
 import TaskWorkbench from './TaskWorkbench';
 
 export interface ModalHandle {
@@ -17,6 +17,7 @@ interface ModalProps {
 
 const Modal = forwardRef<ModalHandle, ModalProps>(function Modal({ nickname, dependencies, onExpandedChange }, ref) {
     const dialogRef = useRef<HTMLDialogElement>(null);
+    const renderLabRef = useRef<RenderLabHandle>(null);
     const openerRef = useRef<HTMLElement | null>(null);
     const [activeTab, setActiveTab] = useState<'task' | 'render'>('task');
     const [opened, setOpened] = useState(false);
@@ -27,6 +28,7 @@ const Modal = forwardRef<ModalHandle, ModalProps>(function Modal({ nickname, dep
 
     const close = useCallback((restoreFocus = true): void => {
         const opener = openerRef.current;
+        renderLabRef.current?.cancelActiveRun();
         setOpened(false);
         setActiveTab('task');
         document.removeEventListener('focusin', focusGuard, true);
@@ -52,6 +54,7 @@ const Modal = forwardRef<ModalHandle, ModalProps>(function Modal({ nickname, dep
     useEffect(() => () => close(false), [close]);
 
     function selectTab(tab: 'task' | 'render', focus = true): void {
+        if (activeTab === 'render' && tab !== 'render') renderLabRef.current?.cancelActiveRun();
         setActiveTab(tab);
         if (focus) queueMicrotask(() => document.getElementById(`ft-${nickname}-tab-${tab}`)?.focus());
     }
@@ -81,7 +84,7 @@ const Modal = forwardRef<ModalHandle, ModalProps>(function Modal({ nickname, dep
                 <h2 id={`ft-${nickname}-dialog-title`}>Component lab</h2>
                 <button className='ft-showcase-button' type='button' aria-label='Close component lab' onClick={() => close()}>Close</button>
             </div>
-            <div className='ft-showcase-tabs' role='tablist' aria-label='Component lab sections' onKeyDown={onTabKey}>
+            <div className='ft-showcase-tabs' role='tablist' tabIndex={-1} aria-label='Component lab sections' onKeyDown={onTabKey}>
                 <button id={`ft-${nickname}-tab-task`} className='ft-showcase-tab' data-ft-role='tab-task' role='tab' type='button' aria-selected={activeTab === 'task'} aria-controls={`ft-${nickname}-panel-task`} tabIndex={activeTab === 'task' ? 0 : -1} onClick={() => selectTab('task', false)}>Task</button>
                 <button id={`ft-${nickname}-tab-render`} className='ft-showcase-tab' data-ft-role='tab-render' role='tab' type='button' aria-selected={activeTab === 'render'} aria-controls={`ft-${nickname}-panel-render`} tabIndex={activeTab === 'render' ? 0 : -1} onClick={() => selectTab('render', false)}>Render</button>
             </div>
@@ -91,7 +94,7 @@ const Modal = forwardRef<ModalHandle, ModalProps>(function Modal({ nickname, dep
                 </div>
             ) : (
                 <div id={`ft-${nickname}-panel-render`} role='tabpanel' aria-labelledby={`ft-${nickname}-tab-render`} aria-describedby={`ft-${nickname}-render-description`}>
-                    <RenderLab nickname={nickname} dependencies={dependencies} />
+                    <RenderLab ref={renderLabRef} nickname={nickname} dependencies={dependencies} />
                 </div>
             ))}
         </dialog>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import {
     formatMilliseconds,
     isAbortError,
@@ -31,7 +31,11 @@ function getStatusCopy(status: RenderStatus): string {
     }
 }
 
-export default function RenderLab({ nickname, dependencies }: { readonly nickname: string; readonly dependencies: RenderLabDependencies }) {
+export interface RenderLabHandle {
+    cancelActiveRun(): void;
+}
+
+const RenderLab = forwardRef<RenderLabHandle, { readonly nickname: string; readonly dependencies: RenderLabDependencies }>(function RenderLab({ nickname, dependencies }, ref) {
     const [size, setSize] = useState<BenchmarkSize>(1000);
     const [rows, setRows] = useState<readonly BenchmarkRow[]>([]);
     const [metrics, setMetrics] = useState<BenchmarkMetrics | null>(null);
@@ -57,6 +61,12 @@ export default function RenderLab({ nickname, dependencies }: { readonly nicknam
         setMetrics(null);
         setStatus({ kind: 'canceled' });
     }, [invalidateRun]);
+
+    useImperativeHandle(ref, () => ({
+        cancelActiveRun() {
+            if (activeRunId.current !== null) invalidateRun();
+        },
+    }), [invalidateRun]);
 
     useEffect(() => {
         mounted.current = true;
@@ -165,4 +175,6 @@ export default function RenderLab({ nickname, dependencies }: { readonly nicknam
             </table>
         </section>
     );
-}
+});
+
+export default RenderLab;
