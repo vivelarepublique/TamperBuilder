@@ -2,7 +2,11 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import {
+    COMPONENT_LAB_TABS,
+    createPanelLifecycleRegistration,
+    focusAndScrollComponentLabTab,
     focusDialogFallback,
+    getComponentLabTabForKey,
     getFocusableElements,
     handleDialogTab,
     isNativeModalDialogSupported,
@@ -89,5 +93,53 @@ describe('native dialog DOM helpers', () => {
         other.focus();
         restoreDialogOpener(opener);
         expect(document.activeElement).toBe(other);
+    });
+});
+
+describe('component lab shell contracts', () => {
+    it('freezes the five tabs in canonical order and navigates with wraparound', () => {
+        expect(COMPONENT_LAB_TABS).toEqual([
+            { key: 'task', label: 'Task' },
+            { key: 'render', label: 'Render' },
+            { key: 'page-bridge', label: 'Page Bridge' },
+            { key: 'composition', label: 'Composition' },
+            { key: 'lifecycle', label: 'Lifecycle' },
+        ]);
+        expect(Object.isFrozen(COMPONENT_LAB_TABS)).toBe(true);
+        expect(COMPONENT_LAB_TABS.every(Object.isFrozen)).toBe(true);
+        expect(getComponentLabTabForKey('task', 'ArrowLeft')).toBe('lifecycle');
+        expect(getComponentLabTabForKey('lifecycle', 'ArrowRight')).toBe('task');
+        expect(getComponentLabTabForKey('page-bridge', 'Home')).toBe('task');
+        expect(getComponentLabTabForKey('page-bridge', 'End')).toBe('lifecycle');
+        expect(getComponentLabTabForKey('task', 'Enter')).toBeNull();
+    });
+
+    it('focuses and scrolls the committed tab into its nearest view', () => {
+        const tab = document.createElement('button');
+        document.body.append(tab);
+        const scrollIntoView = vi.fn();
+        tab.scrollIntoView = scrollIntoView;
+        focusAndScrollComponentLabTab(tab);
+        expect(document.activeElement).toBe(tab);
+        expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+    });
+
+    it('uses identity-safe, idempotent and never-throw panel deactivation', () => {
+        const registration = createPanelLifecycleRegistration();
+        const first = vi.fn();
+        const second = vi.fn(() => {
+            throw new Error('panel cleanup failed');
+        });
+        const unregisterFirst = registration.register({ deactivate: first });
+        const unregisterSecond = registration.register({ deactivate: second });
+
+        unregisterFirst();
+        expect(() => registration.deactivateActivePanel()).not.toThrow();
+        registration.deactivateActivePanel();
+        expect(first).not.toHaveBeenCalled();
+        expect(second).toHaveBeenCalledOnce();
+        unregisterSecond();
+        unregisterSecond();
+        expect(() => registration.deactivateActivePanel()).not.toThrow();
     });
 });

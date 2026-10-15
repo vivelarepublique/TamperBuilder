@@ -1,3 +1,73 @@
+export type ComponentLabTabKey = 'task' | 'render' | 'page-bridge' | 'composition' | 'lifecycle';
+
+export interface ComponentLabTab {
+    readonly key: ComponentLabTabKey;
+    readonly label: string;
+}
+
+export const COMPONENT_LAB_TABS: readonly Readonly<ComponentLabTab>[] = Object.freeze([
+    Object.freeze({ key: 'task', label: 'Task' }),
+    Object.freeze({ key: 'render', label: 'Render' }),
+    Object.freeze({ key: 'page-bridge', label: 'Page Bridge' }),
+    Object.freeze({ key: 'composition', label: 'Composition' }),
+    Object.freeze({ key: 'lifecycle', label: 'Lifecycle' }),
+]);
+
+export function getComponentLabTabForKey(current: ComponentLabTabKey, key: string): ComponentLabTabKey | null {
+    if (key === 'Home') return COMPONENT_LAB_TABS[0]?.key ?? null;
+    if (key === 'End') return COMPONENT_LAB_TABS.at(-1)?.key ?? null;
+    if (key !== 'ArrowLeft' && key !== 'ArrowRight') return null;
+    const currentIndex = COMPONENT_LAB_TABS.findIndex(tab => tab.key === current);
+    if (currentIndex < 0) return null;
+    const offset = key === 'ArrowLeft' ? -1 : 1;
+    return COMPONENT_LAB_TABS[(currentIndex + offset + COMPONENT_LAB_TABS.length) % COMPONENT_LAB_TABS.length]?.key ?? null;
+}
+
+export function focusAndScrollComponentLabTab(tab: HTMLElement): void {
+    tab.focus();
+    if (typeof tab.scrollIntoView === 'function') tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
+export interface PanelLifecycleHandle {
+    deactivate(): void;
+}
+
+export interface PanelLifecycleRegistration {
+    register(handle: PanelLifecycleHandle): () => void;
+    deactivateActivePanel(): void;
+}
+
+export function createPanelLifecycleRegistration(): PanelLifecycleRegistration {
+    let active: PanelLifecycleHandle | null = null;
+
+    return {
+        register(handle) {
+            let deactivated = false;
+            const registeredHandle: PanelLifecycleHandle = {
+                deactivate() {
+                    if (deactivated) return;
+                    deactivated = true;
+                    try {
+                        handle.deactivate();
+                    } catch {
+                        // Panel cleanup is an isolation boundary and must never break the shell.
+                    }
+                },
+            };
+            active = registeredHandle;
+            let unregistered = false;
+            return () => {
+                if (unregistered) return;
+                unregistered = true;
+                if (active === registeredHandle) active = null;
+            };
+        },
+        deactivateActivePanel() {
+            active?.deactivate();
+        },
+    };
+}
+
 const focusableSelector = [
     'a[href]',
     'area[href]',
