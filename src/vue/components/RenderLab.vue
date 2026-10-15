@@ -1,5 +1,6 @@
 <script setup lang="ts">
     import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+    import type { PanelLifecycleHandle } from '../../common/components/dialog';
     import {
         browserRenderLabDependencies,
         formatMilliseconds,
@@ -137,7 +138,7 @@
         }
     }
 
-    function cancelActiveRun(): void {
+    function deactivate(): void {
         if (activeRunId !== null) invalidateRun();
     }
 
@@ -145,7 +146,7 @@
         if (document.hidden && running.value) cancel();
     }
 
-    defineExpose({ cancelActiveRun });
+    defineExpose<PanelLifecycleHandle>({ deactivate });
     onMounted(() => {
         mounted = true;
         document.addEventListener('visibilitychange', onVisibilityChange);

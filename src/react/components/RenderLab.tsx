@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type { PanelLifecycleHandle } from '../../common/components/dialog';
 import {
     formatMilliseconds,
     isAbortError,
@@ -31,9 +32,7 @@ function getStatusCopy(status: RenderStatus): string {
     }
 }
 
-export interface RenderLabHandle {
-    cancelActiveRun(): void;
-}
+export type RenderLabHandle = PanelLifecycleHandle;
 
 const RenderLab = forwardRef<RenderLabHandle, { readonly nickname: string; readonly dependencies: RenderLabDependencies }>(function RenderLab({ nickname, dependencies }, ref) {
     const [size, setSize] = useState<BenchmarkSize>(1000);
@@ -63,7 +62,7 @@ const RenderLab = forwardRef<RenderLabHandle, { readonly nickname: string; reado
     }, [invalidateRun]);
 
     useImperativeHandle(ref, () => ({
-        cancelActiveRun() {
+        deactivate() {
             if (activeRunId.current !== null) invalidateRun();
         },
     }), [invalidateRun]);

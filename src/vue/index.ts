@@ -1,8 +1,10 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
-import { isNativeModalDialogSupported } from '../common/components/dialog';
 import { browserRenderLabDependencies } from '../common/components/benchmark';
+import { createPanelLifecycleRegistration, isNativeModalDialogSupported } from '../common/components/dialog';
 import type { FrameworkMountHandle, FrameworkMountOptions } from '../common/components/frameworkMount';
+import { browserLifecycleLabDependencies } from '../common/components/lifecycle';
+import { createBrowserPageBridgeEnvironment } from '../common/components/pageBridge';
 import App from './App.vue';
 
 function getNickname(target: HTMLElement): string {
@@ -14,7 +16,14 @@ function getNickname(target: HTMLElement): string {
 
 export function createVue(target: HTMLElement, options: FrameworkMountOptions = {}): FrameworkMountHandle {
     if (!isNativeModalDialogSupported()) throw new Error('Native modal dialog is not supported.');
-    const app = createApp(App, { nickname: getNickname(target), dependencies: options.dependencies ?? browserRenderLabDependencies });
+    const rootLifecycle = createPanelLifecycleRegistration();
+    const app = createApp(App, {
+        nickname: getNickname(target),
+        dependencies: options.dependencies ?? browserRenderLabDependencies,
+        pageBridgeEnvironment: options.pageBridgeEnvironment ?? createBrowserPageBridgeEnvironment(),
+        lifecycleDependencies: options.lifecycleDependencies ?? browserLifecycleLabDependencies,
+        registerRootLifecycle: rootLifecycle.register,
+    });
     app.use(createPinia());
     app.mount(target);
     let mounted = true;
@@ -22,6 +31,7 @@ export function createVue(target: HTMLElement, options: FrameworkMountOptions = 
         unmount() {
             if (!mounted) return;
             mounted = false;
+            rootLifecycle.deactivateActivePanel();
             app.unmount();
         },
     };

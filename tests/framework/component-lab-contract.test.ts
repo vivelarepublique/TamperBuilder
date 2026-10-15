@@ -8,7 +8,9 @@ import {
     type BenchmarkRow,
     type RenderLabDependencies,
 } from '../../src/common/components/benchmark';
+import type { LifecycleLabDependencies, LifecycleTaskOptions } from '../../src/common/components/lifecycle';
 import { createLitHarness } from './harness/lit';
+import { createPageBridgeSandbox } from './harness/pageBridgeSandbox';
 import { createPreactHarness } from './harness/preact';
 import { createReactHarness } from './harness/react';
 import { createSolidHarness } from './harness/solid';
@@ -137,7 +139,7 @@ for (const factory of harnessFactories) {
                 expect(directRoles(getByRole(workbench, 'task-filters'))).toEqual(['task-search-field', 'task-filter']);
                 expect(directRoles(getByRole(workbench, 'task-actions'))).toEqual(['task-clear', 'task-reset']);
                 expect(Array.from(target.querySelectorAll<HTMLElement>('[data-ft-role]'), element => element.dataset.ftRole)).toEqual([
-                    'launcher', 'dialog', 'tab-task', 'tab-render', 'task-workbench', 'task-description', 'task-form',
+                    'launcher', 'dialog', 'tab-task', 'tab-render', 'tab-page-bridge', 'tab-composition', 'tab-lifecycle', 'task-workbench', 'task-description', 'task-form',
                     'task-title-field', 'task-title', 'task-title-error-slot', 'task-priority-field', 'task-priority',
                     'task-priority-error-slot', 'task-add', 'task-filters', 'task-search-field', 'task-search', 'task-filter',
                     'task-summary', 'task-progress', 'task-list', 'task-row', 'task-toggle', 'task-delete', 'task-row',
@@ -187,9 +189,13 @@ for (const factory of harnessFactories) {
                 await press('Home');
                 expect(document.activeElement).toBe(getByRole(target, 'tab-task'));
                 await press('End');
-                expect(document.activeElement).toBe(getByRole(target, 'tab-render'));
-                await press('ArrowLeft');
+                expect(document.activeElement).toBe(getByRole(target, 'tab-lifecycle'));
+                await press('ArrowRight');
                 expect(document.activeElement).toBe(getByRole(target, 'tab-task'));
+                await press('ArrowLeft');
+                expect(document.activeElement).toBe(getByRole(target, 'tab-lifecycle'));
+                await press('ArrowLeft');
+                expect(document.activeElement).toBe(getByRole(target, 'tab-composition'));
             });
         });
 
@@ -523,6 +529,160 @@ for (const factory of harnessFactories) {
             } finally {
                 await first.unmount();
                 await second.unmount();
+            }
+        });
+    });
+}
+
+function canonicalElement(element: Element): unknown {
+    const attributes = ['data-ft-role', 'role', 'id', 'aria-labelledby', 'aria-describedby', 'aria-live', 'aria-atomic', 'aria-label', 'aria-controls', 'aria-expanded', 'max', 'type', 'disabled']
+        .flatMap(name => element.hasAttribute(name) ? [[name, element.getAttribute(name)]] : []);
+    const children = Array.from(element.children).flatMap(child => {
+        if (child.localName.startsWith('lit-') && !child.hasAttribute('data-ft-role')) return Array.from(child.children, canonicalElement);
+        return [canonicalElement(child)];
+    });
+    return [element.tagName.toLowerCase(), attributes, element.textContent?.replace(/\s+/gu, '') ?? '', children];
+}
+
+function idleLifecycleDependencies(runTask: LifecycleLabDependencies['runTask'] = () => new Promise(() => undefined)): LifecycleLabDependencies {
+    return {
+        scheduler: { setTimer: () => 1 as unknown as ReturnType<typeof setTimeout>, clearTimer: () => undefined },
+        runTask,
+    };
+}
+
+describe('six-framework five-tab canonical contract', () => {
+    it('renders identical section contracts and exact keyboard scrolling across all roots', async () => {
+        const signatures: unknown[][] = [];
+        const originalScrollDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
+        const scrollIntoView = vi.fn();
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+        try {
+            for (const factory of harnessFactories) {
+                const harness = factory();
+                const sandbox = createPageBridgeSandbox();
+                sandbox.addSearchInput('canonical fixture');
+                try {
+                    await harness.mount({ nickname: 'canonical', pageBridgeEnvironment: sandbox.environment, lifecycleDependencies: idleLifecycleDependencies() });
+                    const target = await openLab(harness);
+                    expect(Array.from(target.querySelectorAll('[role="tab"]'), tab => tab.textContent?.trim())).toEqual(['Task', 'Render', 'Page Bridge', 'Composition', 'Lifecycle']);
+                    const taskTab = getByRole<HTMLElement>(target, 'tab-task');
+                    taskTab.focus();
+                    await perform(harness, () => taskTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })));
+                    expect(scrollIntoView).toHaveBeenLastCalledWith({ block: 'nearest', inline: 'nearest' });
+
+                    const frameworkSignatures: unknown[] = [];
+                    for (const [tab, role] of [
+                        ['task', 'task-workbench'],
+                        ['render', 'render-lab'],
+                        ['page-bridge', 'page-bridge-lab'],
+                        ['composition', 'composition-lab'],
+                        ['lifecycle', 'lifecycle-lab'],
+                    ] as const) {
+                        await click(harness, getByRole(target, `tab-${tab}`));
+                        const panel = target.querySelector<HTMLElement>('[role="tabpanel"]');
+                        if (panel === null) throw new Error(`Missing ${tab} panel.`);
+                        expect(panel.id).toBe(`ft-canonical-panel-${tab}`);
+                        expect(panel.getAttribute('aria-labelledby')).toBe(`ft-canonical-tab-${tab}`);
+                        expect(panel.getAttribute('aria-describedby')).toBe(`ft-canonical-${tab}-description`);
+                        frameworkSignatures.push(canonicalElement(getByRole(target, role)));
+                    }
+                    signatures.push(frameworkSignatures);
+                } finally {
+                    await harness.unmount();
+                    sandbox.dispose();
+                }
+            }
+            expect(signatures).toHaveLength(6);
+            for (const signature of signatures.slice(1)) expect(signature).toEqual(signatures[0]);
+        } finally {
+            if (originalScrollDescriptor === undefined) delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
+            else Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScrollDescriptor);
+        }
+    });
+});
+
+for (const factory of harnessFactories) {
+    describe(`${factory().framework} integrated Lifecycle Lab`, () => {
+        it('completes, cancels, rejects stale callbacks, and deactivates before tab replacement', async () => {
+            const harness = factory();
+            const runs: Array<{ readonly options: LifecycleTaskOptions; resolve(): void; reject(error: unknown): void }> = [];
+            const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            try {
+                await harness.mount({ lifecycleDependencies: idleLifecycleDependencies(options => new Promise<void>((resolve, reject) => runs.push({ options, resolve, reject }))) });
+                const target = await openLab(harness);
+                await click(harness, getByRole(target, 'tab-lifecycle'));
+                expect(Array.from(getByRole(target, 'lifecycle-summary').querySelectorAll('dt'), item => item.textContent)).toEqual(['Current stage', 'Progress', 'Runs completed', 'Status']);
+                expect(getByRole(target, 'lifecycle-status').textContent).toBe('StatusReady to start.');
+                await click(harness, getByRole(target, 'lifecycle-start'));
+                expect(runs).toHaveLength(1);
+                for (const [stage, progress] of [['Prepare', 25], ['Process', 50], ['Finalize', 75], ['Complete', 100]] as const) {
+                    await perform(harness, () => runs[0]?.options.onStage(stage, progress));
+                }
+                runs[0]?.resolve();
+                await harness.flush();
+                await Promise.resolve();
+                await harness.flush();
+                expect(getByRole(target, 'lifecycle-runs-completed').textContent).toBe('Runs completed1');
+                expect(getByRole(target, 'lifecycle-status').textContent).toBe('StatusTask completed.');
+
+                await click(harness, getByRole(target, 'lifecycle-secondary'));
+                expect(runs).toHaveLength(2);
+                const canceledSignal = runs[1]?.options.signal;
+                await click(harness, getByRole(target, 'lifecycle-secondary'));
+                expect(canceledSignal?.aborted).toBe(true);
+                expect(getByRole(target, 'lifecycle-status').textContent).toBe('StatusTask canceled. Restart or reset.');
+                await perform(harness, () => runs[1]?.options.onStage('Prepare', 25));
+                runs[1]?.resolve();
+                await harness.flush();
+                expect(getByRole(target, 'lifecycle-status').textContent).toBe('StatusTask canceled. Restart or reset.');
+
+                await click(harness, getByRole(target, 'lifecycle-secondary'));
+                expect(runs).toHaveLength(3);
+                let abortedBeforeCommit = false;
+                await perform(harness, () => {
+                    getByRole<HTMLButtonElement>(target, 'tab-composition').click();
+                    abortedBeforeCommit = runs[2]?.options.signal.aborted === true;
+                });
+                expect(abortedBeforeCommit).toBe(true);
+                expect(target.querySelector('[data-ft-role="lifecycle-lab"]')).toBeNull();
+                runs[2]?.options.onStage('Prepare', 25);
+                runs[2]?.resolve();
+                await harness.flush();
+                expect(error).not.toHaveBeenCalled();
+            } finally {
+                error.mockRestore();
+                await harness.unmount();
+            }
+        });
+
+        it('contains malformed callback order and early resolution as recoverable failures', async () => {
+            const harness = factory();
+            let scenario: 'order' | 'early' = 'order';
+            const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            try {
+                await harness.mount({ lifecycleDependencies: idleLifecycleDependencies(options => {
+                    if (scenario === 'order') options.onStage('Process', 50);
+                    return Promise.resolve();
+                }) });
+                const target = await openLab(harness);
+                await click(harness, getByRole(target, 'tab-lifecycle'));
+                await click(harness, getByRole(target, 'lifecycle-start'));
+                await Promise.resolve();
+                await harness.flush();
+                expect(getByRole(target, 'lifecycle-status').textContent).toBe('StatusTask could not complete. Restart or reset.');
+                expect(error).toHaveBeenCalledOnce();
+
+                scenario = 'early';
+                await click(harness, getByRole(target, 'lifecycle-secondary'));
+                await Promise.resolve();
+                await harness.flush();
+                expect(getByRole(target, 'lifecycle-status').textContent).toBe('StatusTask could not complete. Restart or reset.');
+                expect(error).toHaveBeenCalledTimes(2);
+                expect(Array.from(getByRole(target, 'lifecycle-log').querySelectorAll('li'), item => item.textContent)).toEqual(['Run 1: Failed.', 'Run 2: Failed.']);
+            } finally {
+                error.mockRestore();
+                await harness.unmount();
             }
         });
     });

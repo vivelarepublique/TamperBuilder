@@ -37,7 +37,7 @@ function buildAndInspect(name, environment, budget) {
     run(process.execPath, [path.join(projectRoot, 'scripts/verify-build-output.mjs')]);
     const outputPath = findUserscript();
     const size = statSync(outputPath).size;
-    if (size > budget) throw new Error(`${name} output is ${size} bytes, above its ${budget}-byte budget`);
+    if (budget !== undefined && size > budget) throw new Error(`${name} output is ${size} bytes, above its ${budget}-byte budget`);
     return {
         report: JSON.parse(readFileSync(reportPath, 'utf8')),
         size,
@@ -79,12 +79,21 @@ try {
         /\/node_modules\/(vue|@vue|pinia|react|react-dom|zustand|preact|@preact|lit|@lit|lit-element|lit-html|solid-js)\//,
     ]);
 
+    const lit = buildAndInspect(
+        'lit',
+        { TAMPER_BUILDER_FRAMEWORK_CONFIG: path.join(projectRoot, 'tests/fixtures/config/lit-only.yaml') },
+    );
+    assertIsolated('Lit-only', lit, 'lit', [
+        /\/src\/(vue|react|preact|svelte|solid)\//,
+        /\/node_modules\/(vue|@vue|pinia|react|react-dom|zustand|preact|@preact|svelte|solid-js)\//,
+    ]);
+
     if (vue.size >= showcase.size || svelte.size >= showcase.size) {
         throw new Error(`Isolated outputs (Vue ${vue.size}, Svelte ${svelte.size}) must be smaller than showcase output (${showcase.size})`);
     }
 
     console.log(
-        `Framework selection verified: showcase=${showcase.size} bytes, Vue-only=${vue.size} bytes, Svelte-only=${svelte.size} bytes; unselected sources and runtimes absent.`,
+        `Framework selection verified: showcase=${showcase.size} bytes, Vue-only=${vue.size} bytes, Svelte-only=${svelte.size} bytes, Lit-only=${lit.size} bytes; unselected sources and runtimes absent.`,
     );
 } finally {
     rmSync(temporaryDirectory, { force: true, recursive: true });

@@ -119,6 +119,7 @@ export function createPageBridgeSubscription(
     let highlightTimer: ReturnType<typeof setTimeout> | null = null;
     let highlightHadAttribute = false;
     let highlightPreviousValue: string | null = null;
+    let highlightAddedClass = false;
     let cleanupErrorLogged = false;
 
     const reportCleanupError = () => {
@@ -141,9 +142,12 @@ export function createPageBridgeSubscription(
         }
         if (ownedTarget === null) return;
         try {
-            if (ownedTarget.getAttribute(highlightAttribute) !== highlightToken) return;
-            if (highlightHadAttribute) ownedTarget.setAttribute(highlightAttribute, highlightPreviousValue ?? '');
-            else ownedTarget.removeAttribute(highlightAttribute);
+            if (highlightAddedClass) ownedTarget.classList.remove('ft-showcase-page-bridge-highlight');
+            highlightAddedClass = false;
+            if (ownedTarget.getAttribute(highlightAttribute) === highlightToken) {
+                if (highlightHadAttribute) ownedTarget.setAttribute(highlightAttribute, highlightPreviousValue ?? '');
+                else ownedTarget.removeAttribute(highlightAttribute);
+            }
         } catch {
             if (reportError) reportCleanupError();
         }
@@ -304,6 +308,8 @@ export function createPageBridgeSubscription(
                 highlightTarget = currentTarget;
                 highlightHadAttribute = currentTarget.hasAttribute(highlightAttribute);
                 highlightPreviousValue = currentTarget.getAttribute(highlightAttribute);
+                highlightAddedClass = !currentTarget.classList.contains('ft-showcase-page-bridge-highlight');
+                currentTarget.classList.add('ft-showcase-page-bridge-highlight');
                 currentTarget.setAttribute(highlightAttribute, highlightToken);
                 let firedSynchronously = false;
                 const createdTimer = environment.setTimer(() => {

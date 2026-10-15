@@ -37,7 +37,7 @@ The default `config/global-configuration.yaml` deliberately selects all six fram
 
 ## Component Lab showcase
 
-Each selected framework mounts the same **Component Lab** UX: a launcher opens a native modal dialog with a deterministic Task workbench and a bounded Render scenario. Apart from each framework logo and its existing animation, the six implementations intentionally share the same copy, DOM structure, controls, responsive layout, focus behavior, and accessibility semantics.
+Each selected framework mounts the same **Component Lab** UX: a launcher opens a native modal dialog with five framework-native Labs in the fixed order **Task → Render → Page Bridge → Composition → Lifecycle**. Apart from each framework logo and its existing animation, the six implementations intentionally share the same copy, section-level DOM structure, controls, responsive layout, focus behavior, and accessibility semantics.
 
 | Framework | Framework-native idioms demonstrated |
 | --- | --- |
@@ -48,7 +48,15 @@ Each selected framework mounts the same **Component Lab** UX: a launcher opens a
 | Svelte | Svelte 5 rune factories, `$derived`, `bind:value`, keyed `each`, `tick`, and lifecycle cleanup |
 | Solid | Root-owned signals/memos, batching, Context, `<For>`/`<Show>`, and owner cleanup |
 
-The Task fixture always starts with the same three rows and exercises native form submission, Unicode-aware validation, search/filter derivation, CRUD focus recovery, progress, and structural reset. The Render tab always runs the same deterministic warm-up plus create/update/remove scenario for 250, 1,000, or 2,000 rows, with cancellation, timeout, hidden-page, error, and stale-result guards.
+The five Labs demonstrate complementary component patterns:
+
+- **Task** starts with the same three rows and exercises native form submission, Unicode-aware validation, search/filter derivation, CRUD focus recovery, progress, and structural reset.
+- **Render** runs the same deterministic warm-up plus create/update/remove scenario for 250, 1,000, or 2,000 rows, with cancellation, timeout, hidden-page, error, and stale-result guards.
+- **Page Bridge** demonstrates safe framework-to-native-DOM interaction using only an injected root and the exact supported Baidu, Bing, or Google search selector. Input values stay in memory and escaped text nodes; the Lab performs no network, storage, history, URL, fallback-DOM, or value-logging operation. Observers, listeners, highlight timers, and token-owned highlight state are synchronously released on every exit path.
+- **Composition** builds one preview card through each framework's native projection API—slots, children, snippets, JSX composition, or light-DOM templates—without raw HTML rendering.
+- **Lifecycle** runs one deterministic cancellable four-stage task and demonstrates native state, cleanup, abort, stale-callback, malformed-runner, and bounded-log handling.
+
+All panels except the root-owned Task collection reset when they are left or closed. Every tab switch, dialog exit, and application unmount synchronously deactivates the active resource-owning panel before replacement.
 
 Render timings describe one interaction on the current page, device, and build. They are **not a scientific cross-framework benchmark**, must not be used to rank frameworks, and have no fixed performance threshold.
 
@@ -120,7 +128,7 @@ Select one or more frameworks in `config/global-configuration.yaml`. Each record
 
 The generated virtual entry statically imports only selected application sources. Vite loads only selected framework transforms, and the build fails if an unselected framework source or runtime enters the application module graph. Lit does not require a framework Vite plugin. Do not delete unselected source directories or manually edit `src/index.ts`; selection is controlled by validated YAML.
 
-You can verify the default six-framework showcase plus the isolated Vue-only and Svelte-only fixtures with:
+You can verify the default six-framework showcase plus the isolated Vue-only, Svelte-only, and Lit-only fixtures with:
 
 ```bash
 npm run verify:frameworks

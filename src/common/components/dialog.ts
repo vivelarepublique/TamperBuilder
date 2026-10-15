@@ -33,8 +33,8 @@ export interface PanelLifecycleHandle {
 }
 
 export interface PanelLifecycleRegistration {
-    register(handle: PanelLifecycleHandle): () => void;
-    deactivateActivePanel(): void;
+    readonly register: (handle: PanelLifecycleHandle) => () => void;
+    readonly deactivateActivePanel: () => void;
 }
 
 export function createPanelLifecycleRegistration(): PanelLifecycleRegistration {

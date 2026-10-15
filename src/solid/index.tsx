@@ -1,7 +1,9 @@
 import { render } from 'solid-js/web';
 import { browserRenderLabDependencies } from '../common/components/benchmark';
-import { isNativeModalDialogSupported } from '../common/components/dialog';
+import { createPanelLifecycleRegistration, isNativeModalDialogSupported } from '../common/components/dialog';
 import type { FrameworkMountHandle, FrameworkMountOptions } from '../common/components/frameworkMount';
+import { browserLifecycleLabDependencies } from '../common/components/lifecycle';
+import { createBrowserPageBridgeEnvironment } from '../common/components/pageBridge';
 import App from './App';
 function getNickname(target: HTMLElement): string {
     if (!target.id.endsWith('App')) throw new Error('Framework target ID must end with App.');
@@ -12,7 +14,8 @@ function getNickname(target: HTMLElement): string {
 
 export function createSolid(target: HTMLElement, options: FrameworkMountOptions = {}): FrameworkMountHandle {
     if (!isNativeModalDialogSupported()) throw new Error('Native modal dialog is not supported.');
-    const dispose = render(() => <App nickname={getNickname(target)} dependencies={options.dependencies ?? browserRenderLabDependencies} />, target);
+    const rootLifecycle = createPanelLifecycleRegistration();
+    const dispose = render(() => <App nickname={getNickname(target)} dependencies={options.dependencies ?? browserRenderLabDependencies} pageBridgeEnvironment={options.pageBridgeEnvironment ?? createBrowserPageBridgeEnvironment()} lifecycleDependencies={options.lifecycleDependencies ?? browserLifecycleLabDependencies} registerRootLifecycle={rootLifecycle.register} />, target);
     let mounted = true;
-    return { unmount() { if (!mounted) return; mounted = false; dispose(); } };
+    return { unmount() { if (!mounted) return; mounted = false; rootLifecycle.deactivateActivePanel(); dispose(); } };
 }

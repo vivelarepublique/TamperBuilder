@@ -10,6 +10,7 @@ import {
     type BenchmarkSize,
     type RenderLabDependencies,
 } from '../../common/components/benchmark';
+import type { PanelLifecycleHandle } from '../../common/components/dialog';
 
 type RenderStatus = { readonly kind: 'idle' } | { readonly kind: 'running'; readonly runId: number } | { readonly kind: 'success' } | { readonly kind: 'startHidden' } | { readonly kind: 'canceled' } | { readonly kind: 'timeout'; readonly phase: BenchmarkPhase } | { readonly kind: 'error' };
 
@@ -39,7 +40,7 @@ function statusCopy(status: RenderStatus): string {
     }
 }
 
-export default function RenderLab({ nickname, dependencies, registerCancel }: { readonly nickname: string; readonly dependencies: RenderLabDependencies; readonly registerCancel: (cancel: (() => void) | null) => void }) {
+export default function RenderLab({ nickname, dependencies, registerLifecycle }: { readonly nickname: string; readonly dependencies: RenderLabDependencies; readonly registerLifecycle: (handle: PanelLifecycleHandle) => () => void }) {
     const model = useMemo(createRenderModel, []);
     const runSequenceRef = useRef(0);
     const activeRunIdRef = useRef<number | null>(null);
@@ -64,10 +65,7 @@ export default function RenderLab({ nickname, dependencies, registerCancel }: { 
         if (activeRunIdRef.current !== null) invalidateRun();
     }, [invalidateRun]);
 
-    useEffect(() => {
-        registerCancel(cancelActiveRun);
-        return () => registerCancel(null);
-    }, [cancelActiveRun, registerCancel]);
+    useEffect(() => registerLifecycle({ deactivate: cancelActiveRun }), [cancelActiveRun, registerLifecycle]);
 
     useEffect(() => {
         mountedRef.current = true;

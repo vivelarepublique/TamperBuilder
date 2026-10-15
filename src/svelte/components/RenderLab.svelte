@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import type { PanelLifecycleHandle } from '../../common/components/dialog';
     import { formatMilliseconds, isAbortError, isBenchmarkTimeoutError, type BenchmarkSize, type RenderLabDependencies } from '../../common/components/benchmark';
     import { createBenchmarkModel } from '../store/benchmark.svelte';
 
@@ -14,7 +15,7 @@
     let statusCopy = $derived.by(() => { switch (model.status.kind) { case 'running': return 'Running…'; case 'success': return 'Scenario complete.'; case 'startHidden': return 'Keep this page visible, then try again.'; case 'canceled': return 'Scenario canceled.'; case 'timeout': return 'Scenario timed out. Try again or reset.'; case 'error': return 'Scenario could not complete.'; default: return ''; } });
 
     function invalidateRun(): void { controller?.abort(); runSequence += 1; activeRunId = null; controller = null; }
-    export function cancelActiveRun(): void { if (activeRunId !== null) invalidateRun(); }
+    export function deactivate(): void { if (activeRunId !== null) invalidateRun(); }
     function cancel(): void { if (!running) return; invalidateRun(); model.clearResult(); model.setStatus({ kind: 'canceled' }); }
     function reset(): void { if (!running && !strictInitial) model.reset(); }
     function updateSize(event: Event): void { if (running) return; const control = event.currentTarget as HTMLSelectElement; const value = Number(control.value); if (value !== 250 && value !== 1000 && value !== 2000) { control.value = String(model.size); model.setInputError('invalid-size'); return; } model.setSize(value as BenchmarkSize); }

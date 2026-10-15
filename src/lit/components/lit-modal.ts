@@ -1,31 +1,134 @@
-import { html, nothing } from 'lit';
+import { html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
-import { handleDialogTab, keepFocusInsideDialog, restoreDialogOpener } from '../../common/components/dialog';
+import type { RenderLabDependencies } from '../../common/components/benchmark';
+import {
+    COMPONENT_LAB_TABS,
+    createPanelLifecycleRegistration,
+    focusAndScrollComponentLabTab,
+    getComponentLabTabForKey,
+    handleDialogTab,
+    keepFocusInsideDialog,
+    restoreDialogOpener,
+    type ComponentLabTabKey,
+    type PanelLifecycleHandle,
+    type PanelLifecycleRegistration,
+} from '../../common/components/dialog';
+import type { LifecycleLabDependencies } from '../../common/components/lifecycle';
+import type { PageBridgeEnvironment } from '../../common/components/pageBridge';
 import { BaseComponent } from '../extends/baseComponents';
-import './lit-task-workbench';
+import './lit-composition-lab';
+import './lit-lifecycle-lab';
+import './lit-page-bridge-lab';
 import './lit-render-lab';
+import './lit-task-workbench';
 
 @customElement('lit-modal')
 export class LitModal extends BaseComponent {
     @property() nickname = '';
-    @state() private activeTab: 'task' | 'render' = 'task';
+    @property({ attribute: false }) dependencies!: RenderLabDependencies;
+    @property({ attribute: false }) pageBridgeEnvironment!: PageBridgeEnvironment;
+    @property({ attribute: false }) lifecycleDependencies!: LifecycleLabDependencies;
+    @property({ attribute: false }) registerRootLifecycle!: PanelLifecycleRegistration['register'];
+    @state() private activeTab: ComponentLabTabKey = 'task';
     @state() private opened = false;
     @query('dialog') private dialog?: HTMLDialogElement;
+    private readonly panelRegistration = createPanelLifecycleRegistration();
+    private unregisterPanel: (() => void) | null = null;
+    private unregisterRoot: (() => void) | null = null;
     private opener: HTMLElement | null = null;
 
     private readonly focusGuard = (event: FocusEvent) => { if (this.dialog !== undefined) keepFocusInsideDialog(event, this.dialog); };
-    async open(source: HTMLElement): Promise<void> { this.opener = source; this.activeTab = 'task'; this.opened = true; await this.updateComplete; this.dialog?.showModal(); document.addEventListener('focusin', this.focusGuard, true); this.dispatchEvent(new CustomEvent('expanded-change', { detail: true })); await this.updateComplete; this.querySelector<HTMLElement>(`#ft-${this.nickname}-tab-task`)?.focus(); }
-    private cancelRenderRun(): void { this.querySelector('lit-render-lab')?.dispatchEvent(new Event('cancel-active-run')); }
-    close(restoreFocus = true): void { const source = this.opener; this.cancelRenderRun(); this.opened = false; this.activeTab = 'task'; document.removeEventListener('focusin', this.focusGuard, true); if (this.dialog?.open) this.dialog.close(); this.dispatchEvent(new CustomEvent('expanded-change', { detail: false })); this.opener = null; if (restoreFocus) restoreDialogOpener(source); }
-    disconnectedCallback(): void { this.close(false); super.disconnectedCallback(); }
-    private selectTab(tab: 'task' | 'render', focus = true): void { if (this.activeTab === 'render' && tab !== 'render') this.cancelRenderRun(); this.activeTab = tab; if (focus) void this.updateComplete.then(() => this.querySelector<HTMLElement>(`#ft-${this.nickname}-tab-${tab}`)?.focus()); }
-    private tabKey(event: KeyboardEvent): void { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); this.selectTab(this.activeTab === 'task' ? 'render' : 'task'); } else if (event.key === 'Home' || event.key === 'End') { event.preventDefault(); this.selectTab(event.key === 'Home' ? 'task' : 'render'); } }
 
-    render() { return html`<dialog class="ft-showcase-dialog" aria-labelledby=${`ft-${this.nickname}-dialog-title`} tabindex="-1" data-ft-role="dialog" @cancel=${(event: Event) => { event.preventDefault(); this.close(); }} @click=${(event: MouseEvent) => { if (event.target === event.currentTarget) this.close(); }} @keydown=${(event: KeyboardEvent) => { if (this.dialog !== undefined) handleDialogTab(event, this.dialog); }}>
-        <div class="ft-showcase-header"><h2 id=${`ft-${this.nickname}-dialog-title`}>Component lab</h2><button class="ft-showcase-button" type="button" aria-label="Close component lab" @click=${() => this.close()}>Close</button></div>
-        <div class="ft-showcase-tabs" role="tablist" tabindex="-1" aria-label="Component lab sections" @keydown=${this.tabKey}><button id=${`ft-${this.nickname}-tab-task`} class="ft-showcase-tab" data-ft-role="tab-task" role="tab" type="button" aria-selected=${this.activeTab === 'task'} aria-controls=${`ft-${this.nickname}-panel-task`} tabindex=${this.activeTab === 'task' ? 0 : -1} @click=${() => this.selectTab('task', false)}>Task</button><button id=${`ft-${this.nickname}-tab-render`} class="ft-showcase-tab" data-ft-role="tab-render" role="tab" type="button" aria-selected=${this.activeTab === 'render'} aria-controls=${`ft-${this.nickname}-panel-render`} tabindex=${this.activeTab === 'render' ? 0 : -1} @click=${() => this.selectTab('render', false)}>Render</button></div>
-        ${!this.opened ? nothing : this.activeTab === 'task' ? html`<div id=${`ft-${this.nickname}-panel-task`} role="tabpanel" aria-labelledby=${`ft-${this.nickname}-tab-task`} aria-describedby=${`ft-${this.nickname}-task-description`}><lit-task-workbench .nickname=${this.nickname}></lit-task-workbench></div>` : html`<div id=${`ft-${this.nickname}-panel-render`} role="tabpanel" aria-labelledby=${`ft-${this.nickname}-tab-render`} aria-describedby=${`ft-${this.nickname}-render-description`}><lit-render-lab .nickname=${this.nickname}></lit-render-lab></div>`}
-    </dialog>`; }
+    connectedCallback(): void {
+        super.connectedCallback();
+        this.unregisterRoot = this.registerRootLifecycle({ deactivate: this.panelRegistration.deactivateActivePanel });
+    }
+
+    async open(source: HTMLElement): Promise<void> {
+        this.opener = source;
+        this.activeTab = 'task';
+        this.opened = true;
+        await this.updateComplete;
+        this.dialog?.showModal();
+        document.addEventListener('focusin', this.focusGuard, true);
+        this.dispatchEvent(new CustomEvent('expanded-change', { detail: true }));
+        await this.updateComplete;
+        this.querySelector<HTMLElement>(`#ft-${this.nickname}-tab-task`)?.focus();
+    }
+
+    deactivate(): void {
+        this.panelRegistration.deactivateActivePanel();
+    }
+
+    close(restoreFocus = true): void {
+        const source = this.opener;
+        this.deactivate();
+        this.opened = false;
+        this.activeTab = 'task';
+        document.removeEventListener('focusin', this.focusGuard, true);
+        if (this.dialog?.open) this.dialog.close();
+        this.dispatchEvent(new CustomEvent('expanded-change', { detail: false }));
+        this.opener = null;
+        if (restoreFocus) restoreDialogOpener(source);
+    }
+
+    disconnectedCallback(): void {
+        this.close(false);
+        this.unregisterPanel?.();
+        this.unregisterRoot?.();
+        this.unregisterPanel = null;
+        this.unregisterRoot = null;
+        super.disconnectedCallback();
+    }
+
+    protected updated(changed: PropertyValues): void {
+        if (!changed.has('activeTab') && !changed.has('opened')) return;
+        this.unregisterPanel?.();
+        this.unregisterPanel = null;
+        if (!this.opened) return;
+        const handle = this.querySelector<PanelLifecycleHandle & Element>('lit-render-lab, lit-page-bridge-lab, lit-lifecycle-lab');
+        if (handle !== null) this.unregisterPanel = this.panelRegistration.register(handle);
+    }
+
+    private selectTab(tab: ComponentLabTabKey, focus = true): void {
+        if (this.activeTab === tab) return;
+        this.deactivate();
+        this.activeTab = tab;
+        if (focus) void this.updateComplete.then(() => {
+            const nextTab = this.querySelector<HTMLElement>(`#ft-${this.nickname}-tab-${tab}`);
+            if (nextTab !== null) focusAndScrollComponentLabTab(nextTab);
+        });
+    }
+
+    private tabKey(event: KeyboardEvent): void {
+        const nextTab = getComponentLabTabForKey(this.activeTab, event.key);
+        if (nextTab === null) return;
+        event.preventDefault();
+        this.selectTab(nextTab);
+    }
+
+    private renderPanel() {
+        const id = `ft-${this.nickname}-panel-${this.activeTab}`;
+        const labelledBy = `ft-${this.nickname}-tab-${this.activeTab}`;
+        const describedBy = `ft-${this.nickname}-${this.activeTab}-description`;
+        let content: TemplateResult | typeof nothing = nothing;
+        switch (this.activeTab) {
+            case 'task': content = html`<lit-task-workbench .nickname=${this.nickname}></lit-task-workbench>`; break;
+            case 'render': content = html`<lit-render-lab .nickname=${this.nickname}></lit-render-lab>`; break;
+            case 'page-bridge': content = html`<lit-page-bridge-lab .nickname=${this.nickname} .environment=${this.pageBridgeEnvironment}></lit-page-bridge-lab>`; break;
+            case 'composition': content = html`<lit-composition-lab .nickname=${this.nickname}></lit-composition-lab>`; break;
+            case 'lifecycle': content = html`<lit-lifecycle-lab .nickname=${this.nickname} .dependencies=${this.lifecycleDependencies}></lit-lifecycle-lab>`; break;
+        }
+        return html`<div id=${id} role="tabpanel" aria-labelledby=${labelledBy} aria-describedby=${describedBy}>${content}</div>`;
+    }
+
+    render() {
+        return html`<dialog class="ft-showcase-dialog" aria-labelledby=${`ft-${this.nickname}-dialog-title`} tabindex="-1" data-ft-role="dialog" @cancel=${(event: Event) => { event.preventDefault(); this.close(); }} @click=${(event: MouseEvent) => { if (event.target === event.currentTarget) this.close(); }} @keydown=${(event: KeyboardEvent) => { if (this.dialog !== undefined) handleDialogTab(event, this.dialog); }}>
+            <div class="ft-showcase-header"><h2 id=${`ft-${this.nickname}-dialog-title`}>Component lab</h2><button class="ft-showcase-button" type="button" aria-label="Close component lab" @click=${() => this.close()}>Close</button></div>
+            <div class="ft-showcase-tabs" role="tablist" tabindex="-1" aria-label="Component lab sections" @keydown=${this.tabKey}>${COMPONENT_LAB_TABS.map(tab => html`<button id=${`ft-${this.nickname}-tab-${tab.key}`} class="ft-showcase-tab" data-ft-role=${`tab-${tab.key}`} role="tab" type="button" aria-selected=${this.activeTab === tab.key} aria-controls=${`ft-${this.nickname}-panel-${tab.key}`} tabindex=${this.activeTab === tab.key ? 0 : -1} @click=${() => this.selectTab(tab.key, false)}>${tab.label}</button>`)}</div>
+            ${this.opened ? this.renderPanel() : nothing}
+        </dialog>`;
+    }
 }
 
 declare global { interface HTMLElementTagNameMap { 'lit-modal': LitModal; } }

@@ -25,7 +25,11 @@ export function createHarness(
         target = document.createElement('div');
         target.id = `${options.nickname ?? framework}App`;
         document.body.appendChild(target);
-        handle = await mountFramework(target, { dependencies: options.dependencies });
+        handle = await mountFramework(target, {
+            dependencies: options.dependencies,
+            pageBridgeEnvironment: options.pageBridgeEnvironment,
+            lifecycleDependencies: options.lifecycleDependencies,
+        });
         await flushFramework();
     }
 

@@ -1,7 +1,9 @@
 import { render } from 'preact';
 import { browserRenderLabDependencies } from '../common/components/benchmark';
-import { isNativeModalDialogSupported } from '../common/components/dialog';
+import { createPanelLifecycleRegistration, isNativeModalDialogSupported } from '../common/components/dialog';
 import type { FrameworkMountHandle, FrameworkMountOptions } from '../common/components/frameworkMount';
+import { browserLifecycleLabDependencies } from '../common/components/lifecycle';
+import { createBrowserPageBridgeEnvironment } from '../common/components/pageBridge';
 import { App } from './App';
 
 function getNickname(target: HTMLElement): string {
@@ -13,7 +15,8 @@ function getNickname(target: HTMLElement): string {
 
 export function createPreact(target: HTMLElement, options: FrameworkMountOptions = {}): FrameworkMountHandle {
     if (!isNativeModalDialogSupported()) throw new Error('Native modal dialog is not supported.');
-    render(<App nickname={getNickname(target)} dependencies={options.dependencies ?? browserRenderLabDependencies} />, target);
+    const rootLifecycle = createPanelLifecycleRegistration();
+    render(<App nickname={getNickname(target)} dependencies={options.dependencies ?? browserRenderLabDependencies} pageBridgeEnvironment={options.pageBridgeEnvironment ?? createBrowserPageBridgeEnvironment()} lifecycleDependencies={options.lifecycleDependencies ?? browserLifecycleLabDependencies} registerRootLifecycle={rootLifecycle.register} />, target);
     let mounted = true;
-    return { unmount() { if (!mounted) return; mounted = false; render(null, target); } };
+    return { unmount() { if (!mounted) return; mounted = false; rootLifecycle.deactivateActivePanel(); render(null, target); } };
 }

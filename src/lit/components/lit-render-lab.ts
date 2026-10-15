@@ -3,13 +3,14 @@ import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { formatMilliseconds, isAbortError, isBenchmarkTimeoutError, type BenchmarkMetrics, type BenchmarkPhase, type BenchmarkRow, type BenchmarkSize } from '../../common/components/benchmark';
+import type { PanelLifecycleHandle } from '../../common/components/dialog';
 import { workbenchContext, type LitWorkbenchValue } from '../context/workbench-context';
 import { BaseComponent } from '../extends/baseComponents';
 
 type RenderStatus = { readonly kind: 'idle' } | { readonly kind: 'running'; readonly runId: number } | { readonly kind: 'success' } | { readonly kind: 'startHidden' } | { readonly kind: 'canceled' } | { readonly kind: 'timeout'; readonly phase: BenchmarkPhase } | { readonly kind: 'error' };
 
 @customElement('lit-render-lab')
-export class LitRenderLab extends BaseComponent {
+export class LitRenderLab extends BaseComponent implements PanelLifecycleHandle {
     @property() nickname = '';
     @consume({ context: workbenchContext, subscribe: true }) workbench?: LitWorkbenchValue;
     @state() private size: BenchmarkSize = 1000;
@@ -29,7 +30,7 @@ export class LitRenderLab extends BaseComponent {
 
     private get running(): boolean { return this.status.kind === 'running'; }
     private get strictInitial(): boolean { return this.size === 1000 && this.rows.length === 0 && this.metrics === null && this.status.kind === 'idle' && this.inputError === null; }
-    private readonly cancelRequested = () => this.cancelActiveRun();
+    private readonly cancelRequested = () => this.deactivate();
     private readonly visibilityChanged = () => { if (document.hidden && this.running) this.cancel(); };
     private invalidateRun(): void { this.controller?.abort(); this.runSequence += 1; this.activeRunId = null; this.controller = null; }
     private cancel(): void { if (!this.running) return; this.invalidateRun(); this.rows = []; this.metrics = null; this.status = { kind: 'canceled' }; }
@@ -63,7 +64,7 @@ export class LitRenderLab extends BaseComponent {
         } finally { if (this.activeRunId === runId && !activeController.signal.aborted && this.mounted) { this.activeRunId = null; this.controller = null; } }
     }
 
-    cancelActiveRun(): void {
+    deactivate(): void {
         if (this.activeRunId !== null) this.invalidateRun();
     }
 

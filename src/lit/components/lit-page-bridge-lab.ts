@@ -19,7 +19,8 @@ export class LitPageBridgeLab extends BaseComponent implements PanelLifecycleHan
     private active = false;
 
     connectedCallback(): void { super.connectedCallback(); this.active = true; }
-    protected firstUpdated(): void {
+    protected willUpdate(): void {
+        if (this.subscription !== null || this.fatal) return;
         if (this.environment === undefined) { this.markFatal(); return; }
         this.observation = { page: getPageBridgePage(this.environment.hostname), found: false, displayValue: '—', eventKind: null };
         try { this.subscription = createPageBridgeSubscription(this.environment, this.commitObservation, this.markFatal); this.subscription.start(); } catch { this.markFatal(); }

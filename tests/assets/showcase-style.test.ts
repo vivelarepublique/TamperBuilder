@@ -36,6 +36,9 @@ interface BrowserLayoutResult {
     readonly innerWidth: number;
     readonly scrollWidth: number;
     readonly undersizedTargets: readonly string[];
+    readonly tabListClientWidth: number;
+    readonly tabListScrollWidth: number;
+    readonly activeTabVisible: boolean;
 }
 
 function findBrowserExecutable(): string {
@@ -66,23 +69,33 @@ function expectBrowserLayout(width: number, markup: string, hostileCss: string):
         const frame = document.getElementById('layout-frame');
         frame.addEventListener('load', () => {
             const frameDocument = frame.contentDocument;
-            const root = frameDocument.documentElement;
-            const body = frameDocument.body;
-            const undersizedTargets = Array.from(frameDocument.querySelectorAll('button, .ft-showcase-choice'))
-                .filter(element => {
-                    const rect = element.getBoundingClientRect();
-                    return rect.width < 44 || rect.height < 44;
-                })
-                .map(element => element.getAttribute('data-ft-role') || element.className);
-            const result = document.createElement('pre');
-            result.id = 'layout-result';
-            result.textContent = JSON.stringify({
-                clientWidth: root.clientWidth,
-                innerWidth: frame.contentWindow.innerWidth,
-                scrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
-                undersizedTargets,
-            });
-            document.body.append(result);
+            const tabList = frameDocument.querySelector('[role="tablist"]');
+            const activeTab = frameDocument.querySelector('[role="tab"][aria-selected="true"]');
+            activeTab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            setTimeout(() => setTimeout(() => {
+                const root = frameDocument.documentElement;
+                const body = frameDocument.body;
+                const listRect = tabList?.getBoundingClientRect();
+                const tabRect = activeTab?.getBoundingClientRect();
+                const undersizedTargets = Array.from(frameDocument.querySelectorAll('button, .ft-showcase-choice'))
+                    .filter(element => {
+                        const rect = element.getBoundingClientRect();
+                        return rect.width < 44 || rect.height < 44;
+                    })
+                    .map(element => element.getAttribute('data-ft-role') || element.className);
+                const result = document.createElement('pre');
+                result.id = 'layout-result';
+                result.textContent = JSON.stringify({
+                    clientWidth: root.clientWidth,
+                    innerWidth: frame.contentWindow.innerWidth,
+                    scrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
+                    undersizedTargets,
+                    tabListClientWidth: tabList?.clientWidth || 0,
+                    tabListScrollWidth: tabList?.scrollWidth || 0,
+                    activeTabVisible: !!listRect && !!tabRect && tabRect.left >= listRect.left - 1 && tabRect.right <= listRect.right + 1,
+                });
+                document.body.append(result);
+            }, 16), 16);
         });
         frame.srcdoc = ${JSON.stringify(innerDocument)};
     `;
@@ -97,6 +110,11 @@ function expectBrowserLayout(width: number, markup: string, hostileCss: string):
             `--user-data-dir=${profilePath}`,
             `--window-size=${width},${width === 390 ? 844 : 900}`,
             '--force-device-scale-factor=1',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding',
+            '--run-all-compositor-stages-before-draw',
+            '--virtual-time-budget=1000',
             '--dump-dom',
             pathToFileURL(documentPath).href,
         ], { encoding: 'utf8', timeout: 30_000 });
@@ -109,6 +127,8 @@ function expectBrowserLayout(width: number, markup: string, hostileCss: string):
         expect(layout.clientWidth).toBe(width);
         expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth);
         expect(layout.undersizedTargets).toEqual([]);
+        expect(layout.activeTabVisible, JSON.stringify(layout)).toBe(true);
+        if (width === 390) expect(layout.tabListScrollWidth).toBeGreaterThan(layout.tabListClientWidth);
     } finally {
         rmSync(directory, { force: true, recursive: true });
     }
@@ -119,7 +139,8 @@ async function renderLabAtViewport(width: number): Promise<void> {
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: width === 390 ? 844 : 900 });
     const hostStyle = document.createElement('style');
     hostStyle.textContent = `
-        h2, form, p, fieldset, legend, label, ul, li, span, progress,
+        h2, h3, form, p, fieldset, legend, label, ul, ol, li, span, progress,
+        section, article, header, footer, output, section div,
         dl, dt, dd, table, thead, tbody, tr, th, td {
             display: none;
             box-sizing: content-box;
@@ -179,6 +200,7 @@ async function renderLabAtViewport(width: number): Promise<void> {
         const choice = target.querySelector<HTMLInputElement>('[data-ft-role="task-toggle"]')!;
         expect([getComputedStyle(action).minWidth, getComputedStyle(action).minHeight]).toEqual(['44px', '44px']);
         expect([getComputedStyle(choice).width, getComputedStyle(choice).height]).toEqual(['44px', '44px']);
+        expectBrowserLayout(width, rail.outerHTML, hostStyle.textContent ?? '');
 
         act(() => target.querySelector<HTMLButtonElement>('[data-ft-role="tab-render"]')?.click());
         await harness.flush();
@@ -197,6 +219,25 @@ async function renderLabAtViewport(width: number): Promise<void> {
             'block', 'border-box', '24px', '24px',
         ]);
         expectBrowserLayout(width, rail.outerHTML, hostStyle.textContent ?? '');
+
+        const panelCases: readonly (readonly [string, string, readonly string[]])[] = [
+            ['tab-page-bridge', 'page-bridge-lab', ['section', 'output', 'dl', 'dt', 'dd']],
+            ['tab-composition', 'composition-lab', ['section', 'article', 'header', 'footer', 'h3']],
+            ['tab-lifecycle', 'lifecycle-lab', ['section', 'ol', 'li', 'progress', 'dl']],
+        ];
+        for (const [tabRole, labRole, semanticSelectors] of panelCases) {
+            act(() => target.querySelector<HTMLButtonElement>(`[data-ft-role="${tabRole}"]`)?.click());
+            await harness.flush();
+            const lab = target.querySelector<HTMLElement>(`[data-ft-role="${labRole}"]`);
+            if (lab === null) throw new Error(`Missing ${labRole}.`);
+            for (const selector of semanticSelectors) {
+                const element = lab.matches(selector) ? lab : lab.querySelector(selector);
+                if (element === null) throw new Error(`Missing ${labRole} semantic element: ${selector}`);
+                expectHostRuleIsolated(element);
+                expect(getComputedStyle(element).boxSizing).toBe('border-box');
+            }
+            expectBrowserLayout(width, rail.outerHTML, hostStyle.textContent ?? '');
+        }
     } finally {
         await harness.unmount();
         hostStyle.remove();
