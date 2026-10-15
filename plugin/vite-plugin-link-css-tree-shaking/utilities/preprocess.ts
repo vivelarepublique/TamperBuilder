@@ -94,7 +94,6 @@ async function readBoundedBody(response: Response, source: string, maxResponseBy
         const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
         totalBytes += bytes.length;
         if (totalBytes > maxResponseBytes) {
-            destroyResponseBody(response);
             throw new Error(`Remote CSS resource exceeds the ${maxResponseBytes}-byte limit: ${source}`);
         }
         chunks.push(bytes);
@@ -139,44 +138,49 @@ export async function readRemoteResource(
                 signal.removeEventListener('abort', abortHandler);
             }
 
-            const reportedUrl = validateRemoteUrl(response.url || currentUrl.href, response.url || currentUrl.href);
-            if (reportedUrl.href !== currentUrl.href) {
-                throw new Error(`Remote CSS response URL changed unexpectedly from ${currentUrl.href} to ${reportedUrl.href}`);
-            }
-
-            const nextUrl = redirectTarget(response, currentUrl);
-            if (nextUrl) {
-                destroyResponseBody(response);
-                if (redirects >= policy.maxRedirects) {
-                    throw new Error(`Remote CSS resource exceeded ${policy.maxRedirects} redirects: ${source}`);
-                }
-                if (!allowedOrigins.has(nextUrl.origin)) {
-                    throw new Error(`Remote CSS redirect origin is not allowed: ${nextUrl.origin}`);
-                }
-                currentUrl = nextUrl;
-                continue;
-            }
-
-            if (!response.ok) throw new Error(`Unable to load remote CSS resource ${source}: HTTP ${response.status}`);
-            const mimeType = response.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase();
-            if (!mimeType || !CSS_MIME_TYPES.has(mimeType)) {
-                throw new Error(`Remote CSS resource has unsupported Content-Type ${mimeType || '(missing)'}: ${source}`);
-            }
-
-            let rawBytes: Buffer;
+            let consumedResponseBody = false;
             try {
-                rawBytes = await readBoundedBody(response, source, policy.maxResponseBytes);
-            } catch (error) {
-                if (callerSignal?.aborted) throw new Error(`Remote CSS request was cancelled: ${source}`, { cause: error });
-                if (timeoutController.signal.aborted) throw new Error(`Remote CSS request timed out after ${policy.timeoutMs}ms: ${source}`, { cause: error });
-                if (error instanceof Error && error.message.startsWith('Remote CSS resource')) throw error;
-                throw new Error(`Unable to read remote CSS response body: ${source}`, { cause: error });
+                const reportedUrl = validateRemoteUrl(response.url || currentUrl.href, response.url || currentUrl.href);
+                if (reportedUrl.href !== currentUrl.href) {
+                    throw new Error(`Remote CSS response URL changed unexpectedly from ${currentUrl.href} to ${reportedUrl.href}`);
+                }
+
+                const nextUrl = redirectTarget(response, currentUrl);
+                if (nextUrl) {
+                    if (redirects >= policy.maxRedirects) {
+                        throw new Error(`Remote CSS resource exceeded ${policy.maxRedirects} redirects: ${source}`);
+                    }
+                    if (!allowedOrigins.has(nextUrl.origin)) {
+                        throw new Error(`Remote CSS redirect origin is not allowed: ${nextUrl.origin}`);
+                    }
+                    currentUrl = nextUrl;
+                    continue;
+                }
+
+                if (!response.ok) throw new Error(`Unable to load remote CSS resource ${source}: HTTP ${response.status}`);
+                const mimeType = response.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase();
+                if (!mimeType || !CSS_MIME_TYPES.has(mimeType)) {
+                    throw new Error(`Remote CSS resource has unsupported Content-Type ${mimeType || '(missing)'}: ${source}`);
+                }
+
+                let rawBytes: Buffer;
+                try {
+                    rawBytes = await readBoundedBody(response, source, policy.maxResponseBytes);
+                    consumedResponseBody = true;
+                } catch (error) {
+                    if (callerSignal?.aborted) throw new Error(`Remote CSS request was cancelled: ${source}`, { cause: error });
+                    if (timeoutController.signal.aborted) throw new Error(`Remote CSS request timed out after ${policy.timeoutMs}ms: ${source}`, { cause: error });
+                    if (error instanceof Error && error.message.startsWith('Remote CSS resource')) throw error;
+                    throw new Error(`Unable to read remote CSS response body: ${source}`, { cause: error });
+                }
+                const actualDigest = createHash('sha256').update(rawBytes).digest();
+                if (!actualDigest.equals(expectedDigest)) {
+                    throw new Error(`Remote CSS SHA-256 integrity mismatch: ${source}`);
+                }
+                return { content: processRemoteCssBytes(rawBytes, source), rawBytes };
+            } finally {
+                if (!consumedResponseBody) destroyResponseBody(response);
             }
-            const actualDigest = createHash('sha256').update(rawBytes).digest();
-            if (!actualDigest.equals(expectedDigest)) {
-                throw new Error(`Remote CSS SHA-256 integrity mismatch: ${source}`);
-            }
-            return { content: processRemoteCssBytes(rawBytes, source), rawBytes };
         }
     } finally {
         clearTimeout(timeout);

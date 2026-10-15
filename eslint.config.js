@@ -111,7 +111,7 @@ export default [
             'no-var': 'off',
         },
     },
-    ...scope(vue.configs['flat/essential'], ['**/*.vue']),
+    ...scope(vue.configs['flat/recommended'], ['**/*.vue']),
     {
         files: ['**/*.vue'],
         languageOptions: {
@@ -121,6 +121,13 @@ export default [
                 extraFileExtensions: ['.vue'],
             },
             globals: globals.browser,
+        },
+        rules: {
+            // Preserve the sample templates' established wrapping and indentation while enabling Vue's correctness recommendations.
+            'vue/attributes-order': 'off',
+            'vue/html-indent': 'off',
+            'vue/max-attributes-per-line': 'off',
+            'vue/singleline-html-element-content-newline': 'off',
         },
     },
     {

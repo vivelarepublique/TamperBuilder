@@ -35,6 +35,15 @@ const ignoredPaths = [
     'tests/plugin/__snapshots__/generated.snap',
 ];
 
+const frameworkRules = [
+    ['src/vue/App.vue', 'vue/attribute-hyphenation'],
+    ['src/svelte/App.svelte', 'svelte/no-at-html-tags'],
+    ['src/react/App.tsx', 'react/jsx-key'],
+    ['src/preact/App.tsx', 'react/no-unknown-property'],
+    ['src/lit/index.ts', 'lit/no-invalid-html'],
+    ['src/solid/index.tsx', 'solid/no-react-deps'],
+] as const;
+
 describe('ESLint repository coverage', () => {
     it.each(lintedPaths)('lints %s', async filePath => {
         const absolutePath = path.join(projectRoot, filePath);
@@ -44,5 +53,10 @@ describe('ESLint repository coverage', () => {
 
     it.each(ignoredPaths)('ignores %s', async filePath => {
         await expect(eslint.isPathIgnored(path.join(projectRoot, filePath))).resolves.toBe(true);
+    });
+
+    it.each(frameworkRules)('enables %s rule %s', async (filePath, ruleName) => {
+        const config = (await eslint.calculateConfigForFile(path.join(projectRoot, filePath))) as { rules?: Record<string, [number, ...unknown[]]> } | undefined;
+        expect(config?.rules?.[ruleName]?.[0]).toBeGreaterThan(0);
     });
 });

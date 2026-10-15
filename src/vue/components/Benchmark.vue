@@ -5,7 +5,7 @@
         <div class="field">
             <label class="label">Render Number</label>
             <div class="control">
-                <input type="number" class="input" placeholder="Render Number" v-model="count" />
+                <input type="number" class="input" placeholder="Render Number" v-model="count">
             </div>
         </div>
 

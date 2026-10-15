@@ -12,7 +12,7 @@
             <div class="column">
                 <div class="field has-addons">
                     <div class="control">
-                        <input class="input" type="number" placeholder="Amount" v-model="amount" />
+                        <input class="input" type="number" placeholder="Amount" v-model="amount">
                     </div>
                     <div class="control">
                         <button class="button button-framework-test-vue" @click="incrementByAmount(amount)">Increment By Amount</button>

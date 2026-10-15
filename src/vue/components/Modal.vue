@@ -29,7 +29,10 @@
 
 <script setup lang="ts">
     defineProps({
-        msg: String,
+        msg: {
+            type: String,
+            required: true,
+        },
     });
     import { ref } from 'vue';
     import type { Component } from 'vue';

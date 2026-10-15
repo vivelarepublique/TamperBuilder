@@ -66,6 +66,29 @@ describe('remote CSS security policy', () => {
         await expect(readRemoteResource(source, createHash('sha256').update(invalidUtf8).digest(), policy)).rejects.toThrow('not valid UTF-8');
     });
 
+    it('destroys response bodies rejected before consumption', async () => {
+        async function expectDestroyed(rejectedResponse: ReturnType<typeof response>, expectedError: string, selectedPolicy = policy) {
+            const destroySpy = vi.spyOn(rejectedResponse.body, 'destroy');
+            fetchMock.mockResolvedValueOnce(rejectedResponse);
+            await expect(readRemoteResource(source, digest, selectedPolicy)).rejects.toThrow(expectedError);
+            expect(destroySpy).toHaveBeenCalledOnce();
+        }
+
+        await expectDestroyed(response('https://cdn.example.com/changed.min.css'), 'changed unexpectedly');
+        await expectDestroyed(response(normalizedSource, cssBytes, {}, 500), 'HTTP 500');
+        await expectDestroyed(response(normalizedSource, cssBytes, {}), 'unsupported Content-Type (missing)');
+        await expectDestroyed(response(normalizedSource, cssBytes, { 'content-type': 'text/html' }), 'unsupported Content-Type text/html');
+        await expectDestroyed(response(normalizedSource, cssBytes, {}, 302), 'missing a Location header');
+        await expectDestroyed(response(normalizedSource, cssBytes, { location: 'http://cdn.example.com/styles.min.css' }, 302), 'must use HTTPS');
+        await expectDestroyed(response(normalizedSource, cssBytes, { location: 'https://assets.example.net/styles.min.css' }, 302), 'redirect origin is not allowed');
+        await expectDestroyed(response(normalizedSource, cssBytes, { location: '/again.min.css' }, 302), 'exceeded 0 redirects', {
+            ...policy,
+            maxRedirects: 0,
+        });
+        await expectDestroyed(response(normalizedSource, cssBytes, { 'content-type': 'text/css', 'content-length': 'invalid' }), 'invalid Content-Length');
+        await expectDestroyed(response(normalizedSource, cssBytes, { 'content-type': 'text/css', 'content-length': '2048' }), '1024-byte limit');
+    });
+
     it('enforces declared and streaming response size limits', async () => {
         fetchMock.mockResolvedValueOnce(response(normalizedSource, cssBytes, { 'content-type': 'text/css', 'content-length': '2048' }));
         await expect(readRemoteResource(source, digest, policy)).rejects.toThrow('1024-byte limit');
@@ -92,17 +115,22 @@ describe('remote CSS security policy', () => {
         await expect(readRemoteResource(source, digest, policy)).rejects.toThrow('must use HTTPS');
     });
 
-    it('reports timeout and caller cancellation distinctly', async () => {
-        const timeoutSpy = vi.spyOn(globalThis, 'setTimeout').mockImplementationOnce(handler => {
-            if (typeof handler === 'function') handler();
-            return 0 as unknown as ReturnType<typeof setTimeout>;
-        });
-        await expect(readRemoteResource(source, digest, { ...policy, timeoutMs: 5 })).rejects.toThrow('timed out');
-        timeoutSpy.mockRestore();
+    it('reports in-flight timeout and caller cancellation distinctly', async () => {
+        vi.useFakeTimers();
+        try {
+            fetchMock.mockImplementationOnce(() => new Promise(() => undefined));
+            const timeoutExpectation = expect(readRemoteResource(source, digest, { ...policy, timeoutMs: 5 })).rejects.toThrow('timed out');
+            await vi.advanceTimersByTimeAsync(5);
+            await timeoutExpectation;
 
-        const controller = new AbortController();
-        controller.abort();
-        await expect(readRemoteResource(source, digest, policy, controller.signal)).rejects.toThrow('cancelled');
+            fetchMock.mockImplementationOnce(() => new Promise(() => undefined));
+            const controller = new AbortController();
+            const cancellationExpectation = expect(readRemoteResource(source, digest, policy, controller.signal)).rejects.toThrow('cancelled');
+            controller.abort();
+            await cancellationExpectation;
+        } finally {
+            vi.useRealTimers();
+        }
     });
 });
 

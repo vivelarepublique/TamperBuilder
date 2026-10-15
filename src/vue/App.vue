@@ -14,9 +14,9 @@
 <template>
     <button id="framework-test-vue-modal" class="button framework-test-modal-switch" @click="open" @mouseenter="focus = true" @mouseleave="focus = false">
         <span v-if="focus">More</span>
-        <img src="../assets/svg/vue.svg" class="ft-button-logo" alt="Vue logo" />
+        <img src="../assets/svg/vue.svg" class="ft-button-logo" alt="Vue logo">
     </button>
-    <Modal v-if="show" msg="Welcome Vue"></Modal>
+    <Modal v-if="show" msg="Welcome Vue" />
 </template>
 
 <style>
