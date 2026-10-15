@@ -1,0 +1,317 @@
+#framework-test-launcher-rail,
+.ft-showcase-dialog {
+    --ft-showcase-surface: #fff;
+    --ft-showcase-surface-muted: #f4f7fb;
+    --ft-showcase-text: #172033;
+    --ft-showcase-text-muted: #526079;
+    --ft-showcase-border: #8491a3;
+    --ft-showcase-accent: #155eef;
+    --ft-showcase-accent-hover: #004ee8;
+    --ft-showcase-danger: #b42318;
+    --ft-showcase-success: #067647;
+    --ft-showcase-focus: #0b6bcb;
+    --ft-showcase-overlay: rgba(15, 23, 42, 0.58);
+    --ft-showcase-radius: 8px;
+    --ft-showcase-shadow: 0 16px 48px rgba(15, 23, 42, 0.24);
+    color: var(--ft-showcase-text);
+    font: 400 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+#framework-test-launcher-rail {
+    position: fixed;
+    z-index: 9998;
+    top: 16px;
+    left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: calc(100vw - 32px);
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher,
+.ft-showcase-dialog .ft-showcase-button,
+.ft-showcase-dialog .ft-showcase-input,
+.ft-showcase-dialog .ft-showcase-select,
+.ft-showcase-dialog .ft-showcase-progress,
+.ft-showcase-dialog .ft-showcase-image {
+    box-sizing: border-box;
+    appearance: none;
+    border: 1px solid var(--ft-showcase-border);
+    border-radius: var(--ft-showcase-radius);
+    color: var(--ft-showcase-text);
+    font: inherit;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher,
+.ft-showcase-dialog .ft-showcase-button {
+    min-width: 44px;
+    min-height: 44px;
+    cursor: pointer;
+    background: var(--ft-showcase-accent);
+    color: #fff;
+    transition: background-color 160ms ease, transform 160ms ease;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher {
+    display: inline-flex;
+    width: 120px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 12px;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher:hover,
+.ft-showcase-dialog .ft-showcase-button:hover {
+    background: var(--ft-showcase-accent-hover);
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher:active,
+.ft-showcase-dialog .ft-showcase-button:active {
+    transform: translateY(1px);
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher:disabled,
+.ft-showcase-dialog .ft-showcase-button:disabled,
+.ft-showcase-dialog .ft-showcase-input:disabled,
+.ft-showcase-dialog .ft-showcase-select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher:focus-visible,
+.ft-showcase-dialog .ft-showcase-button:focus-visible,
+.ft-showcase-dialog .ft-showcase-input:focus-visible,
+.ft-showcase-dialog .ft-showcase-select:focus-visible,
+.ft-showcase-dialog .ft-showcase-tab:focus-visible {
+    outline: 3px solid var(--ft-showcase-focus);
+    outline-offset: 2px;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher-image {
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    border: 0;
+}
+
+.ft-showcase-dialog {
+    width: min(960px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+    max-height: calc(100dvh - 32px);
+    margin: auto;
+    padding: 24px;
+    overflow: auto;
+    border: 1px solid var(--ft-showcase-border);
+    border-radius: var(--ft-showcase-radius);
+    background: var(--ft-showcase-surface);
+    box-shadow: var(--ft-showcase-shadow);
+}
+
+.ft-showcase-dialog::backdrop {
+    background: var(--ft-showcase-overlay);
+}
+
+.ft-showcase-dialog .ft-showcase-header,
+.ft-showcase-dialog .ft-showcase-tabs,
+.ft-showcase-dialog .ft-showcase-actions,
+.ft-showcase-dialog .ft-showcase-render-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ft-showcase-dialog .ft-showcase-header {
+    justify-content: space-between;
+}
+
+.ft-showcase-dialog .ft-showcase-tab {
+    min-height: 44px;
+    padding: 8px 16px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: var(--ft-showcase-text-muted);
+    font: inherit;
+    cursor: pointer;
+}
+
+.ft-showcase-dialog .ft-showcase-tab[aria-selected='true'] {
+    border-bottom-color: var(--ft-showcase-accent);
+    color: var(--ft-showcase-text);
+}
+
+.ft-showcase-dialog .ft-showcase-task-form,
+.ft-showcase-dialog .ft-showcase-task-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr) auto;
+    gap: 16px;
+    align-items: end;
+}
+
+.ft-showcase-dialog .ft-showcase-field {
+    min-width: 0;
+}
+
+.ft-showcase-dialog .ft-showcase-label {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--ft-showcase-text);
+    font-weight: 600;
+}
+
+.ft-showcase-dialog .ft-showcase-input,
+.ft-showcase-dialog .ft-showcase-select {
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 10px;
+    background: var(--ft-showcase-surface);
+}
+
+.ft-showcase-dialog .ft-showcase-error,
+.ft-showcase-dialog .ft-showcase-danger {
+    color: var(--ft-showcase-danger);
+}
+
+.ft-showcase-dialog .ft-showcase-success {
+    color: var(--ft-showcase-success);
+}
+
+.ft-showcase-dialog .ft-showcase-muted {
+    color: var(--ft-showcase-text-muted);
+}
+
+.ft-showcase-dialog .ft-showcase-progress {
+    width: 100%;
+    height: 12px;
+    overflow: hidden;
+    border: 0;
+    background: var(--ft-showcase-surface-muted);
+}
+
+.ft-showcase-dialog .ft-showcase-progress::-webkit-progress-value {
+    background: var(--ft-showcase-success);
+}
+
+.ft-showcase-dialog .ft-showcase-task-list {
+    margin: 16px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ft-showcase-dialog .ft-showcase-task-row {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto 88px;
+    min-height: 52px;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--ft-showcase-border);
+}
+
+.ft-showcase-dialog .ft-showcase-task-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.ft-showcase-dialog .ft-showcase-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.ft-showcase-dialog .ft-showcase-metric {
+    padding: 12px;
+    border: 1px solid var(--ft-showcase-border);
+    border-radius: var(--ft-showcase-radius);
+    background: var(--ft-showcase-surface-muted);
+}
+
+.ft-showcase-dialog .ft-showcase-table-wrap {
+    max-width: 100%;
+    height: 240px;
+    overflow: auto;
+}
+
+.ft-showcase-dialog .ft-showcase-table {
+    width: 100%;
+    min-width: 0;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.ft-showcase-dialog .ft-showcase-table th,
+.ft-showcase-dialog .ft-showcase-table td {
+    height: 32px;
+    padding: 4px 8px;
+    overflow-wrap: anywhere;
+    border-bottom: 1px solid var(--ft-showcase-border);
+    text-align: left;
+}
+
+@media (max-width: 767px) {
+    .ft-showcase-dialog .ft-showcase-task-form,
+    .ft-showcase-dialog .ft-showcase-task-filters,
+    .ft-showcase-dialog .ft-showcase-metrics {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ft-showcase-dialog .ft-showcase-task-form .ft-showcase-button,
+    .ft-showcase-dialog .ft-showcase-actions .ft-showcase-button {
+        width: 100%;
+    }
+
+    .ft-showcase-dialog .ft-showcase-actions,
+    .ft-showcase-dialog .ft-showcase-render-controls {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 599px) {
+    #framework-test-launcher-rail {
+        top: auto;
+        right: 8px;
+        bottom: 8px;
+        left: 8px;
+        flex-direction: row;
+        max-width: none;
+        overflow-x: auto;
+    }
+
+    #framework-test-launcher-rail .ft-showcase-launcher {
+        width: 44px;
+        min-width: 44px;
+        padding: 6px;
+    }
+
+    #framework-test-launcher-rail .ft-showcase-launcher-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .ft-showcase-dialog {
+        width: calc(100vw - 16px);
+        max-width: calc(100vw - 16px);
+        padding: 16px;
+    }
+
+    .ft-showcase-dialog .ft-showcase-task-row {
+        grid-template-columns: 44px minmax(0, 1fr) 72px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #framework-test-launcher-rail .ft-showcase-launcher,
+    .ft-showcase-dialog,
+    .ft-showcase-dialog .ft-showcase-button,
+    .ft-showcase-dialog .framework-test-logo-animation {
+        animation: none;
+        transition: none;
+    }
+}

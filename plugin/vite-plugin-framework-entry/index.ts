@@ -69,9 +69,9 @@ export function createFrameworkEntryCode(frameworks: FrameworkConfiguration[]): 
     const targetDeclaration = divFrameworks.length === 0 ? '' : `const frameworkTargets = getMultiDivAppElement(${JSON.stringify(divNicknames)});`;
     const mounts = frameworks.map((configuration, index) => {
         const definition = FRAMEWORK_DEFINITIONS[configuration.framework];
-        if (definition.target === 'custom-element') return `() => mountFramework${index}()`;
+        if (definition.target === 'custom-element') return `() => void mountFramework${index}()`;
         const targetIndex = divFrameworks.findIndex(item => item.index === index);
-        return `() => mountFramework${index}(frameworkTargets[${targetIndex}])`;
+        return `() => void mountFramework${index}(frameworkTargets[${targetIndex}])`;
     });
 
     return `${imports.join('\n')}

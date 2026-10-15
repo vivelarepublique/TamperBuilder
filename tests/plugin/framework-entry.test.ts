@@ -18,7 +18,7 @@ describe('framework virtual entry', () => {
         const code = createFrameworkEntryCode(vueOnly);
 
         expect(code).toContain("from \"/src/vue\"");
-        expect(code).toContain('mountFramework0(frameworkTargets[0])');
+        expect(code).toContain('() => void mountFramework0(frameworkTargets[0])');
         expect(code).not.toMatch(/\/src\/(react|preact|lit|svelte|solid)/);
     });
 
@@ -33,7 +33,7 @@ describe('framework virtual entry', () => {
         const target = document.createElement('div');
 
         expect(code).toContain('const divFrameworkNicknames = ["demo"]');
-        expect(code).toContain('mountFramework0(frameworkTargets[0])');
+        expect(code).toContain('() => void mountFramework0(frameworkTargets[0])');
         createLit(target);
 
         expect(target.firstElementChild?.tagName.toLowerCase()).toBe('lit-app');

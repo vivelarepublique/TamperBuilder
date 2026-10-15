@@ -3,8 +3,18 @@ import type { ScriptOptions, LinkOptions } from '../interface/element';
 import { body, head } from '../alias';
 
 export function createDivAppElement(id: string | string[]): void {
-    if (Array.isArray(id)) id.forEach(i => appendElement(body, createElementWithAttributes('div', { props: { id: `${i}App` } })));
-    else appendElement(body, createElementWithAttributes('div', { props: { id: `${id}App` } }));
+    const railId = 'framework-test-launcher-rail';
+    const existingRail = document.getElementById(railId);
+    const rail = existingRail ?? createElementWithAttributes('div', { props: { id: railId } });
+    if (!rail.isConnected) appendElement(body, rail);
+
+    const nicknames = Array.isArray(id) ? id : [id];
+    for (const nickname of new Set(nicknames)) {
+        const targetId = `${nickname}App`;
+        const existingTarget = document.getElementById(targetId);
+        const target = existingTarget ?? createElementWithAttributes('div', { props: { id: targetId } });
+        appendElement(rail, target);
+    }
 }
 
 export function createAppElement(name: string | string[]): void {

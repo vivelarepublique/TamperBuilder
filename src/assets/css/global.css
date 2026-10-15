@@ -3,6 +3,7 @@
 @import './components/Index.css';
 @import './components/VectorImage.css';
 @import './components/MainModal.css';
+@import './components/Showcase.css';
 
 @keyframes anime-top-framework-test {
     0% {
