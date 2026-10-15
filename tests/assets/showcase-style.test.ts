@@ -2,7 +2,11 @@
 
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { act } from 'react';
 import { describe, expect, it } from 'vitest';
+import { createReactHarness } from '../framework/harness/react';
+
+(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const css = readFileSync(path.join(process.cwd(), 'src/assets/css/components/Showcase.css'), 'utf8');
 
@@ -17,6 +21,103 @@ function contrast(first: string, second: string): number {
     return ((values[0] ?? 0) + 0.05) / ((values[1] ?? 0) + 0.05);
 }
 
+function expectHostRuleIsolated(element: Element): void {
+    const style = getComputedStyle(element);
+    expect(style.display).not.toBe('none');
+    expect(style.color).not.toBe('rgb(255, 0, 0)');
+    expect(style.marginTop).not.toBe('99px');
+}
+
+async function renderLabAtViewport(width: number): Promise<void> {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: width === 390 ? 844 : 900 });
+    const hostStyle = document.createElement('style');
+    hostStyle.textContent = `
+        h2, form, p, fieldset, legend, label, ul, li, span, progress,
+        dl, dt, dd, table, thead, tbody, tr, th, td {
+            display: none;
+            box-sizing: content-box;
+            color: red;
+            margin: 99px;
+            padding: 99px;
+            border: 10px solid red;
+            font: 48px fantasy;
+        }
+        input { appearance: auto; box-sizing: content-box; width: 900px; }
+        button { width: 900px; max-width: 900px; height: 900px; max-height: 900px; margin: 80px; padding: 70px; }
+        img { display: inline; width: 900px; height: 900px; margin: 50px; padding: 50px; border: 20px solid red; }
+        dialog { box-sizing: content-box; }
+    `;
+    const showcaseStyle = document.createElement('style');
+    showcaseStyle.textContent = css;
+    const rail = document.createElement('div');
+    rail.id = 'framework-test-launcher-rail';
+    document.head.append(hostStyle, showcaseStyle);
+    document.body.appendChild(rail);
+    const harness = createReactHarness();
+
+    try {
+        await harness.mount({
+            dependencies: {
+                scheduler: {
+                    now: () => 0,
+                    requestFrame: () => 1,
+                    cancelFrame: () => undefined,
+                    setTimer: (callback, milliseconds) => setTimeout(callback, milliseconds),
+                    clearTimer: handle => clearTimeout(handle),
+                },
+                runScenario: options => {
+                    const rows = [{ id: 1, label: 'Row 0001', revision: 0 as const }];
+                    options.adapter.replaceRows(rows);
+                    options.adapter.updateRows(rows);
+                    options.adapter.removeRows(rows);
+                    return Promise.resolve({ createMs: 1, updateMs: 1, removeMs: 1, remainingRows: 1 });
+                },
+            },
+        });
+        const target = harness.getTarget();
+        rail.appendChild(target);
+        act(() => target.querySelector<HTMLButtonElement>('[data-ft-role="launcher"]')?.click());
+        await harness.flush();
+        const dialog = target.querySelector<HTMLDialogElement>('[data-ft-role="dialog"]')!;
+        const task = target.querySelector<HTMLElement>('[data-ft-role="task-workbench"]')!;
+
+        for (const selector of ['h2', 'p', 'form', 'fieldset', 'legend', 'label', 'ul', 'li', 'span', 'progress']) {
+            const element = task.querySelector(selector) ?? dialog.querySelector(selector);
+            if (element === null) throw new Error(`Missing Task semantic element: ${selector}`);
+            expectHostRuleIsolated(element);
+            expect(getComputedStyle(element).boxSizing).toBe('border-box');
+        }
+
+        const action = target.querySelector<HTMLButtonElement>('[data-ft-role="task-add"]')!;
+        const choice = target.querySelector<HTMLInputElement>('[data-ft-role="task-toggle"]')!;
+        expect([getComputedStyle(action).minWidth, getComputedStyle(action).minHeight]).toEqual(['44px', '44px']);
+        expect([getComputedStyle(choice).width, getComputedStyle(choice).height]).toEqual(['44px', '44px']);
+
+        act(() => target.querySelector<HTMLButtonElement>('[data-ft-role="tab-render"]')?.click());
+        await harness.flush();
+        act(() => target.querySelector<HTMLButtonElement>('[data-ft-role="render-run"]')?.click());
+        await harness.flush();
+        for (const selector of ['dl', 'dt', 'dd', 'table', 'thead', 'tbody', 'tr', 'th', 'td']) {
+            const element = target.querySelector(selector);
+            if (element === null) throw new Error(`Missing Render semantic element: ${selector}`);
+            expectHostRuleIsolated(element);
+            expect(getComputedStyle(element).boxSizing).toBe('border-box');
+        }
+
+        expect(getComputedStyle(dialog).boxSizing).toBe('border-box');
+        const image = target.querySelector<HTMLImageElement>('.ft-showcase-launcher-image')!;
+        expect([getComputedStyle(image).display, getComputedStyle(image).boxSizing, getComputedStyle(image).width, getComputedStyle(image).height]).toEqual([
+            'block', 'border-box', '24px', '24px',
+        ]);
+    } finally {
+        await harness.unmount();
+        hostStyle.remove();
+        showcaseStyle.remove();
+        rail.remove();
+    }
+}
+
 describe('Component Lab visual contract', () => {
     it('imports the namespaced stylesheet and scopes every selector block', () => {
         const globalCss = readFileSync(path.join(process.cwd(), 'src/assets/css/global.css'), 'utf8');
@@ -26,58 +127,30 @@ describe('Component Lab visual contract', () => {
         expect(css).toContain('.ft-showcase-dialog');
     });
 
-    it('contains responsive, containment, target-size, focus and reduced-motion rules', () => {
+    it('contains responsive static containment without claiming jsdom layout or paint coverage', () => {
         expect(css).toContain('@media (max-width: 599px)');
         expect(css).toContain('@media (max-width: 767px)');
         expect(css).toContain('@media (prefers-reduced-motion: reduce)');
-        expect(css).toContain('box-sizing: border-box');
         expect(css).toContain('@keyframes framework-test-scale');
-        expect(css).toContain('#framework-test-launcher-rail .framework-test-logo-animation');
-        expect(css).toContain('min-height: 44px');
         expect(css).toContain('max-width: calc(100vw - 32px)');
-        expect(css).toContain(':focus-visible');
+        expect(css).toContain('width: calc(100vw - 16px)');
+        expect(css).toContain('overflow-x: auto');
+        expect(css).toContain('grid-template-columns: minmax(0, 1fr)');
         expect(css).toContain('height: 240px');
     });
 
-    it('keeps rendered controls and launcher images isolated from ordinary host rules at 390px', () => {
-        Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
-        Object.defineProperty(window, 'innerHeight', { configurable: true, value: 844 });
-        const hostStyle = document.createElement('style');
-        hostStyle.textContent = 'input { appearance: auto; box-sizing: content-box; width: 900px; } button { width: 900px; max-width: 900px; height: 900px; max-height: 900px; margin: 80px; padding: 70px; } img { display: inline; width: 900px; height: 900px; margin: 50px; padding: 50px; border: 20px solid red; } dialog { box-sizing: content-box; }';
-        const showcaseStyle = document.createElement('style');
-        showcaseStyle.textContent = css;
-        document.head.append(hostStyle, showcaseStyle);
-        document.body.innerHTML = '<div id="framework-test-launcher-rail"><button class="ft-showcase-launcher"><img class="ft-showcase-launcher-image framework-test-logo-animation"></button></div><dialog class="ft-showcase-dialog"><button class="ft-showcase-button">Action</button><input class="ft-showcase-choice" type="radio"><input class="ft-showcase-choice" type="checkbox"></dialog>';
+    it.each([1440, 390])('restores semantic baselines against ordinary host rules at %ipx', async width => {
+        await renderLabAtViewport(width);
+    });
 
-        const dialog = document.querySelector<HTMLDialogElement>('dialog')!;
-        const button = document.querySelector<HTMLButtonElement>('.ft-showcase-button')!;
-        const choices = [...document.querySelectorAll<HTMLInputElement>('.ft-showcase-choice')];
-        const image = document.querySelector<HTMLImageElement>('.ft-showcase-launcher-image')!;
-        expect(getComputedStyle(dialog).boxSizing).toBe('border-box');
-        expect([
-            getComputedStyle(button).width,
-            getComputedStyle(button).maxWidth,
-            getComputedStyle(button).height,
-            getComputedStyle(button).maxHeight,
-            getComputedStyle(button).margin,
-            getComputedStyle(button).padding,
-        ]).toEqual(['auto', '100%', 'auto', 'none', '0px', '8px 16px']);
-        for (const choice of choices) {
-            expect([
-                getComputedStyle(choice).boxSizing,
-                getComputedStyle(choice).appearance,
-                getComputedStyle(choice).width,
-                getComputedStyle(choice).height,
-            ]).toEqual(['border-box', 'none', '44px', '44px']);
-        }
-        expect([getComputedStyle(image).display, getComputedStyle(image).boxSizing, getComputedStyle(image).width, getComputedStyle(image).height]).toEqual([
-            'block', 'border-box', '24px', '24px',
-        ]);
-        expect(dialog.scrollWidth).toBeLessThanOrEqual(390);
-
-        hostStyle.remove();
-        showcaseStyle.remove();
-        document.body.replaceChildren();
+    it('uses portable backgrounds for choice indicators and preserves native input states', () => {
+        expect(css).not.toMatch(/\.ft-showcase-choice::(?:before|after)/u);
+        expect(css).toContain(".ft-showcase-dialog .ft-showcase-choice[type='checkbox']:checked");
+        expect(css).toContain(".ft-showcase-dialog .ft-showcase-choice[type='radio']:checked");
+        expect(css).toContain('.ft-showcase-dialog .ft-showcase-choice:focus-visible');
+        expect(css).toContain('.ft-showcase-dialog .ft-showcase-choice:disabled');
+        expect(css).toContain('background-image: radial-gradient(');
+        expect(css).toContain('background-size: 10px 10px, 18px 18px, 20px 20px');
     });
 
     it('keeps text and focus tokens above required contrast', () => {

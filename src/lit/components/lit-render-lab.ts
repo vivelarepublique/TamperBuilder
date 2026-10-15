@@ -34,7 +34,7 @@ export class LitRenderLab extends BaseComponent {
     private invalidateRun(): void { this.controller?.abort(); this.runSequence += 1; this.activeRunId = null; this.controller = null; }
     private cancel(): void { if (!this.running) return; this.invalidateRun(); this.rows = []; this.metrics = null; this.status = { kind: 'canceled' }; }
     private reset(): void { if (this.running || this.strictInitial) return; this.size = 1000; this.rows = []; this.metrics = null; this.status = { kind: 'idle' }; this.inputError = null; }
-    private updateSize(event: Event): void { if (this.running) return; const value = Number((event.currentTarget as HTMLSelectElement).value); if (value !== 250 && value !== 1000 && value !== 2000) { this.inputError = 'invalid-size'; return; } this.size = value; this.inputError = null; }
+    private updateSize(event: Event): void { if (this.running) return; const control = event.currentTarget as HTMLSelectElement; const value = Number(control.value); if (value !== 250 && value !== 1000 && value !== 2000) { control.value = String(this.size); this.inputError = 'invalid-size'; return; } this.size = value; this.inputError = null; }
 
     private async run(): Promise<void> {
         if (this.running || this.workbench === undefined) return;

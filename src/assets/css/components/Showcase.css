@@ -28,6 +28,96 @@
     max-width: calc(100vw - 32px);
 }
 
+#framework-test-launcher-rail span,
+.ft-showcase-dialog h2,
+.ft-showcase-dialog p,
+.ft-showcase-dialog form,
+.ft-showcase-dialog fieldset,
+.ft-showcase-dialog legend,
+.ft-showcase-dialog label,
+.ft-showcase-dialog ul,
+.ft-showcase-dialog li,
+.ft-showcase-dialog span,
+.ft-showcase-dialog progress,
+.ft-showcase-dialog dl,
+.ft-showcase-dialog dt,
+.ft-showcase-dialog dd,
+.ft-showcase-dialog table,
+.ft-showcase-dialog thead,
+.ft-showcase-dialog tbody,
+.ft-showcase-dialog tr,
+.ft-showcase-dialog th,
+.ft-showcase-dialog td {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: inherit;
+    font: inherit;
+}
+
+.ft-showcase-dialog h2 {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.ft-showcase-dialog p,
+.ft-showcase-dialog form,
+.ft-showcase-dialog fieldset,
+.ft-showcase-dialog legend,
+.ft-showcase-dialog ul,
+.ft-showcase-dialog li,
+.ft-showcase-dialog progress,
+.ft-showcase-dialog dl,
+.ft-showcase-dialog dt,
+.ft-showcase-dialog dd {
+    display: block;
+}
+
+#framework-test-launcher-rail span,
+.ft-showcase-dialog label,
+.ft-showcase-dialog span {
+    display: inline;
+}
+
+.ft-showcase-dialog fieldset {
+    min-width: 0;
+}
+
+.ft-showcase-dialog ul {
+    list-style: none;
+}
+
+.ft-showcase-dialog table {
+    display: table;
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+
+.ft-showcase-dialog thead {
+    display: table-header-group;
+}
+
+.ft-showcase-dialog tbody {
+    display: table-row-group;
+}
+
+.ft-showcase-dialog tr {
+    display: table-row;
+}
+
+.ft-showcase-dialog th,
+.ft-showcase-dialog td {
+    display: table-cell;
+    text-align: start;
+}
+
+.ft-showcase-dialog th {
+    font-weight: 600;
+}
+
 #framework-test-launcher-rail .ft-showcase-launcher,
 .ft-showcase-dialog .ft-showcase-button,
 .ft-showcase-dialog .ft-showcase-input,
@@ -203,7 +293,7 @@
 }
 
 .ft-showcase-dialog .ft-showcase-choice {
-    display: inline-grid;
+    display: inline-block;
     width: 44px;
     min-width: 44px;
     max-width: 44px;
@@ -212,49 +302,45 @@
     max-height: 44px;
     margin: 0;
     padding: 0;
-    place-content: center;
     vertical-align: middle;
     border: 0;
     border-radius: 0;
-    background: transparent;
+    background-color: transparent;
+    background-image:
+        linear-gradient(var(--ft-showcase-surface), var(--ft-showcase-surface)),
+        linear-gradient(var(--ft-showcase-border), var(--ft-showcase-border));
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 18px 18px, 20px 20px;
     cursor: pointer;
 }
 
-.ft-showcase-dialog .ft-showcase-choice::after,
-.ft-showcase-dialog .ft-showcase-choice::before {
-    grid-area: 1 / 1;
+.ft-showcase-dialog .ft-showcase-choice[type='radio'] {
+    background-image: radial-gradient(
+        circle,
+        var(--ft-showcase-surface) 0 8px,
+        var(--ft-showcase-border) 8px 10px,
+        transparent 10px
+    );
+    background-size: 20px 20px;
 }
 
-.ft-showcase-dialog .ft-showcase-choice::after {
-    width: 20px;
-    height: 20px;
-    box-sizing: border-box;
-    border: 1px solid var(--ft-showcase-border);
-    border-radius: var(--ft-showcase-radius);
-    background: var(--ft-showcase-surface);
-    content: '';
+.ft-showcase-dialog .ft-showcase-choice[type='checkbox']:checked {
+    background-image:
+        linear-gradient(var(--ft-showcase-accent), var(--ft-showcase-accent)),
+        linear-gradient(var(--ft-showcase-surface), var(--ft-showcase-surface)),
+        linear-gradient(var(--ft-showcase-border), var(--ft-showcase-border));
+    background-size: 10px 10px, 18px 18px, 20px 20px;
 }
 
-.ft-showcase-dialog .ft-showcase-choice[type='radio']::after {
-    border-radius: 50%;
-}
-
-.ft-showcase-dialog .ft-showcase-choice::before {
-    z-index: 1;
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-    background: var(--ft-showcase-accent);
-    content: '';
-    transform: scale(0);
-}
-
-.ft-showcase-dialog .ft-showcase-choice[type='radio']::before {
-    border-radius: 50%;
-}
-
-.ft-showcase-dialog .ft-showcase-choice:checked::before {
-    transform: scale(1);
+.ft-showcase-dialog .ft-showcase-choice[type='radio']:checked {
+    background-image: radial-gradient(
+        circle,
+        var(--ft-showcase-accent) 0 5px,
+        var(--ft-showcase-surface) 5px 8px,
+        var(--ft-showcase-border) 8px 10px,
+        transparent 10px
+    );
 }
 
 .ft-showcase-dialog .ft-showcase-choice:disabled {

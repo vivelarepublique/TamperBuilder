@@ -129,8 +129,10 @@ const RenderLab = forwardRef<RenderLabHandle, { readonly nickname: string; reado
 
     function updateSize(event: React.ChangeEvent<HTMLSelectElement>): void {
         if (running) return;
-        const value = Number(event.currentTarget.value);
+        const control = event.currentTarget;
+        const value = Number(control.value);
         if (value !== 250 && value !== 1000 && value !== 2000) {
+            control.value = String(size);
             setInputError('invalid-size');
             return;
         }

@@ -25,6 +25,11 @@ export function createReact(target: HTMLElement, options: FrameworkMountOptions 
         unmount() {
             if (!mounted) return;
             mounted = false;
+            const dialog = target.querySelector<HTMLDialogElement>('[data-ft-role="dialog"]');
+            if (dialog?.open) {
+                dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+                if (dialog.open) dialog.close();
+            }
             root.unmount();
         },
     };

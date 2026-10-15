@@ -76,8 +76,10 @@
 
     function updateSize(event: Event): void {
         if (running.value) return;
-        const value = Number((event.currentTarget as HTMLSelectElement).value);
+        const control = event.currentTarget as HTMLSelectElement;
+        const value = Number(control.value);
         if (value !== 250 && value !== 1000 && value !== 2000) {
+            control.value = String(size.value);
             inputError.value = 'invalid-size';
             return;
         }

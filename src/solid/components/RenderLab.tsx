@@ -19,7 +19,7 @@ export default function RenderLab(props: { readonly nickname: string; readonly d
     function invalidateRun(): void { controller?.abort(); runSequence += 1; activeRunId = null; controller = null; }
     function cancel(): void { if (!running()) return; invalidateRun(); batch(() => { setRows([]); setMetrics(null); setStatus({ kind: 'canceled' }); }); }
     function reset(): void { if (running() || strictInitial()) return; batch(() => { setSize(1000); setRows([]); setMetrics(null); setStatus({ kind: 'idle' }); setInputError(null); }); }
-    function updateSize(event: Event): void { if (running()) return; const value = Number((event.currentTarget as HTMLSelectElement).value); if (value !== 250 && value !== 1000 && value !== 2000) { setInputError('invalid-size'); return; } batch(() => { setSize(value); setInputError(null); }); }
+    function updateSize(event: Event): void { if (running()) return; const control = event.currentTarget as HTMLSelectElement; const value = Number(control.value); if (value !== 250 && value !== 1000 && value !== 2000) { control.value = String(size()); setInputError('invalid-size'); return; } batch(() => { setSize(value); setInputError(null); }); }
     async function run(): Promise<void> {
         if (running()) return;
         setInputError(null);

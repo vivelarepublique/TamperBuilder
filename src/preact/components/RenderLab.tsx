@@ -118,8 +118,13 @@ export default function RenderLab({ nickname, dependencies, registerCancel }: { 
 
     function updateSize(event: Event): void {
         if (running) return;
-        const value = Number((event.currentTarget as HTMLSelectElement).value);
-        if (value !== 250 && value !== 1000 && value !== 2000) { model.setInputError('invalid-size'); return; }
+        const control = event.currentTarget as HTMLSelectElement;
+        const value = Number(control.value);
+        if (value !== 250 && value !== 1000 && value !== 2000) {
+            control.value = String(model.size.value);
+            model.setInputError('invalid-size');
+            return;
+        }
         model.setSize(value);
     }
     function reset(): void { if (!running && !strictInitial) model.reset(); }

@@ -24,7 +24,12 @@ describe('Task workbench pure contracts', () => {
         expect(first).not.toBe(second);
         expect(first[0]).not.toBe(second[0]);
         expect(isInitialTaskCollection(first, 4)).toBe(true);
+        expect(isInitialTaskCollection([{ ...first[0], id: 4 }, ...first.slice(1)], 4)).toBe(false);
         expect(isInitialTaskCollection([{ ...first[0], title: 'Changed' }, ...first.slice(1)], 4)).toBe(false);
+        expect(isInitialTaskCollection([{ ...first[0], priority: 'low' }, ...first.slice(1)], 4)).toBe(false);
+        expect(isInitialTaskCollection([{ ...first[0], completed: true }, ...first.slice(1)], 4)).toBe(false);
+        expect(isInitialTaskCollection(first.slice(0, 2), 4)).toBe(false);
+        expect(isInitialTaskCollection([...first, { id: 4, title: 'Extra', priority: 'medium', completed: false }], 4)).toBe(false);
         expect(isInitialTaskCollection(first, 5)).toBe(false);
         expect(isInitialTaskCollection([first[1], first[0], first[2]], 4)).toBe(false);
     });
