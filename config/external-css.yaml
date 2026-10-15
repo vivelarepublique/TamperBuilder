@@ -1,0 +1,4 @@
+timeoutMs: 10000
+maxResponseBytes: 2097152
+maxRedirects: 3
+allowedRedirectOrigins: []

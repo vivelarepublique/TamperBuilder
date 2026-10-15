@@ -10,8 +10,10 @@ import { replaceValueUsed } from './replace.ts';
 import type { TreeShakingOptions, CssRuleObjectArray } from '../interfaces/index.ts';
 
 export default async function treeShaking(option: TreeShakingOptions): Promise<string[]> {
-    const { manualEntry, componentsFilesPath, excludeTags, excludeClassNameKeywords, replaceVariableDeclarations } = option;
-    const cssArray = manualEntry ? manualHandlingCssFiles(manualEntry) : splitCssFile(await parseIndexHTML());
+    const { manualEntry, componentsFilesPath, excludeTags, excludeClassNameKeywords, replaceVariableDeclarations, externalCssPolicy, signal, cacheDirectory } = option;
+    const cssArray = manualEntry
+        ? manualHandlingCssFiles(manualEntry)
+        : splitCssFile(await parseIndexHTML('index.html', { externalCssPolicy, signal, cacheDirectory }));
     const componentsArray = componentsAnalysis(componentsFilesPath || 'src/components');
 
     const css = filterCssUsed(cssArray, {

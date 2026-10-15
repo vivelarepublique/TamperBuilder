@@ -4,7 +4,7 @@ import type { ConfigEnv, PluginOption, UserConfig } from 'vite';
 import linkCssTreeShaking from './plugin/vite-plugin-link-css-tree-shaking/index.ts';
 import tamperBannerAndCssInjection from './plugin/vite-plugin-tamper-banner-and-css-injection/index.ts';
 import frameworkEntry, { FRAMEWORK_ENTRY_ID } from './plugin/vite-plugin-framework-entry/index.ts';
-import { getProjectRoot, loadBannerConfig, loadFrameworkConfig } from './config/getParameters.ts';
+import { getProjectRoot, loadBannerConfig, loadExternalCssConfig, loadFrameworkConfig } from './config/getParameters.ts';
 import type { FrameworkConfiguration } from './config/getParameters.ts';
 
 async function loadSelectedFrameworkPlugins(frameworks: FrameworkConfiguration[]): Promise<PluginOption[]> {
@@ -46,6 +46,7 @@ async function loadSelectedFrameworkPlugins(frameworks: FrameworkConfiguration[]
 export default async function configure({ command, mode }: ConfigEnv): Promise<UserConfig> {
     const rootDirectory = getProjectRoot();
     const bannerConfig = loadBannerConfig({ rootDirectory });
+    const externalCssPolicy = loadExternalCssConfig({ rootDirectory });
     const globalConfig = loadFrameworkConfig({
         rootDirectory,
         frameworkPath: process.env.TAMPER_BUILDER_FRAMEWORK_CONFIG,
@@ -59,6 +60,7 @@ export default async function configure({ command, mode }: ConfigEnv): Promise<U
         ? [
               linkCssTreeShaking({
                   manualEntry: process.env.TAMPER_BUILDER_CSS_ENTRY,
+                  externalCssPolicy,
                   componentsFilesPath: globalConfig.map(config => path.resolve(rootDirectory, config.componentsFilesPaths)),
                   replaceVariableDeclarations: true,
               }),

@@ -106,6 +106,12 @@ You can verify the default six-framework showcase and the Vue-only fixture with:
 npm run verify:frameworks
 ```
 
+## External CSS integrity
+
+Remote stylesheet links in `index.html` must use an exact HTTPS URL, a valid `sha256-...` integrity attribute, and `crossorigin="anonymous"`. Downloads are restricted by `config/external-css.yaml`; redirects, response size, MIME type, UTF-8 decoding, digest verification, and atomic cache writes all fail the build when unsafe or invalid. Cache keys include the normalized origin, path, and query, and cached raw bytes are reverified before every use.
+
+Normal tests and quality builds never download CSS: their build scripts set `TAMPER_BUILDER_CSS_ENTRY` to `tests/fixtures/css/safe.min.css`. See [the external CSS integrity audit](documentation/external-css-integrity.md) before renewing the pinned Bulma resource or allowing a redirect origin.
+
 ## Customization Guide
 
 1. Modify project metadata such as name, description, version, and author in `package.json` and `config/banner.yaml`.

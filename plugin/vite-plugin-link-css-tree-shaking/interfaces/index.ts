@@ -1,9 +1,19 @@
+export interface ExternalCssPolicy {
+    timeoutMs: number;
+    maxResponseBytes: number;
+    maxRedirects: number;
+    allowedRedirectOrigins: string[];
+}
+
 export interface TreeShakingOptions {
     manualEntry?: string | string[];
     componentsFilesPath?: string | string[];
     excludeTags?: string[];
     excludeClassNameKeywords?: string;
     replaceVariableDeclarations?: boolean;
+    externalCssPolicy?: ExternalCssPolicy;
+    signal?: AbortSignal;
+    cacheDirectory?: string;
 }
 
 export interface KeyAndValueObject {
@@ -36,11 +46,18 @@ export interface HTMLStructure {
         head: {
             meta: any[];
             title: string;
-            link?: { __rel: string; __href: string } | { __rel: string; __href: string }[];
+            link?: StylesheetLink | StylesheetLink[];
         };
         body: {
             scripts: { __type: string; __src: string } | { __type: string; __src: string }[];
         };
         __lang?: string;
     };
+}
+
+export interface StylesheetLink {
+    __rel: string;
+    __href: string;
+    __integrity?: string;
+    __crossorigin?: string;
 }

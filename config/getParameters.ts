@@ -26,12 +26,21 @@ interface ConfigurationOptions {
     rootDirectory?: string;
     bannerPath?: string;
     frameworkPath?: string;
+    externalCssPath?: string;
     packageMetadata?: PackageMetadata;
+}
+
+export interface ExternalCssConfiguration {
+    timeoutMs: number;
+    maxResponseBytes: number;
+    maxRedirects: number;
+    allowedRedirectOrigins: string[];
 }
 
 const defaultRootDirectory = fileURLToPath(new URL('..', import.meta.url));
 const bannerFields = ['name', 'namespace', 'version', 'description', 'author', 'match', 'require', 'runAt', 'runIn', 'sandbox', 'tag', 'noframes', 'grant', 'connect'] as const;
 const frameworkFields = ['framework', 'nickname', 'componentsFilesPaths'] as const;
+const externalCssFields = ['timeoutMs', 'maxResponseBytes', 'maxRedirects', 'allowedRedirectOrigins'] as const;
 
 function configurationError(field: string, message: string): never {
     throw new Error(`${field}: ${message}`);
@@ -117,6 +126,51 @@ function validateConnectHost(host: string, field: string): void {
     if (!hostnamePattern.test(host)) {
         configurationError(field, 'must be an explicit hostname without a scheme, path, port, or wildcard');
     }
+}
+
+function requiredInteger(record: Record<string, unknown>, key: string, field: string, minimum: number, maximum: number): number {
+    const value = record[key];
+    if (!Number.isSafeInteger(value) || (value as number) < minimum || (value as number) > maximum) {
+        configurationError(`${field}.${key}`, `must be a safe integer between ${minimum} and ${maximum}`);
+    }
+    return value as number;
+}
+
+function allowedOrigins(record: Record<string, unknown>, field: string): string[] {
+    const value = record.allowedRedirectOrigins;
+    if (!Array.isArray(value)) configurationError(`${field}.allowedRedirectOrigins`, 'must be an array');
+
+    const origins = value.map((item, index) => {
+        if (typeof item !== 'string' || item.trim().length === 0) {
+            configurationError(`${field}.allowedRedirectOrigins[${index}]`, 'must be a non-empty HTTPS origin');
+        }
+        let url: URL;
+        try {
+            url = new URL(item as string);
+        } catch {
+            configurationError(`${field}.allowedRedirectOrigins[${index}]`, 'must be a valid HTTPS origin');
+        }
+        if (url.protocol !== 'https:' || url.origin !== item || url.username || url.password) {
+            configurationError(`${field}.allowedRedirectOrigins[${index}]`, 'must be an HTTPS origin without credentials, path, query, or fragment');
+        }
+        return item as string;
+    });
+    if (new Set(origins).size !== origins.length) configurationError(`${field}.allowedRedirectOrigins`, 'must not contain duplicates');
+    return origins;
+}
+
+export function loadExternalCssConfig(options: ConfigurationOptions = {}): ExternalCssConfiguration {
+    const rootDirectory = options.rootDirectory ?? defaultRootDirectory;
+    const externalCssPath = resolveConfigurationPath(rootDirectory, options.externalCssPath, 'config/external-css.yaml');
+    const configuration = requireRecord(readYaml(externalCssPath, 'externalCss'), 'externalCss');
+    rejectUnknownFields(configuration, externalCssFields, 'externalCss');
+
+    return {
+        timeoutMs: requiredInteger(configuration, 'timeoutMs', 'externalCss', 1, 60000),
+        maxResponseBytes: requiredInteger(configuration, 'maxResponseBytes', 'externalCss', 1, 10485760),
+        maxRedirects: requiredInteger(configuration, 'maxRedirects', 'externalCss', 0, 10),
+        allowedRedirectOrigins: allowedOrigins(configuration, 'externalCss'),
+    };
 }
 
 export function loadBannerConfig(options: ConfigurationOptions = {}): ScriptInformationParameters {
