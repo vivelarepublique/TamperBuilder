@@ -83,7 +83,9 @@ describe('cssTemplate', () => {
         const generatedCode = jsTemplate('', '', bundleCode);
         const context = { __bundleProbe: '' };
 
-        expect(() => new Script(generatedCode).runInNewContext(context)).not.toThrow();
+        expect(() => {
+            new Script(generatedCode).runInNewContext(context);
+        }).not.toThrow();
         expect(context.__bundleProbe).toBe('safe');
         expect(generatedCode).toContain('value.startsWith("/*")');
     });

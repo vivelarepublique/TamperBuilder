@@ -1,4 +1,4 @@
-const ANSI_ESCAPE_PATTERN = /\u001b\[[0-?]*[ -/]*[@-~]/g;
+const ANSI_ESCAPE_PATTERN = new RegExp('\\u001b\\[[0-?]*[ -/]*[@-~]', 'g');
 
 export const NATIVE_CONFIG_WARNING_HEADER =
     "(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:";

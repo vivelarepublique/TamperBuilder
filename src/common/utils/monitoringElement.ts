@@ -17,7 +17,10 @@ export function listenElementChanges(selector: string | CommonSelectors, options
     if (!getElement(selector)) throw new Error('Element not found');
     const selectorTargetElement = getElement(selector) as IndexedByStringElement;
 
-    if (immediateImplementation) attributesConcern ? callback(selectorTargetElement[attributesConcern]) : callback();
+    if (immediateImplementation) {
+        if (attributesConcern) callback(selectorTargetElement[attributesConcern]);
+        else callback();
+    }
 
     const children = childrenConcern.map(({ selector, action }) => {
         return {
@@ -40,7 +43,7 @@ export function listenElementChanges(selector: string | CommonSelectors, options
                 const attributesMutation = mutations.find(el => {
                     return (el.target as HTMLElement).matches(combinedSelector) && (!strictMode || el.attributeName === attributesConcern);
                 });
-                attributesMutation && delayedCallback((attributesMutation.target as IndexedByStringElement)[attributesConcern]);
+                if (attributesMutation) delayedCallback((attributesMutation.target as IndexedByStringElement)[attributesConcern]);
             }
         }
     });

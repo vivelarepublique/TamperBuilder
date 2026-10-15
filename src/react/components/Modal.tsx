@@ -30,7 +30,7 @@ export default function Modal(props: Props) {
         if (event.target === event.currentTarget) {
             close();
         }
-    }, []);
+    }, [close]);
     return (
         <Fragment>
             <div className='framework-test-modal-mask' onClick={_close}>

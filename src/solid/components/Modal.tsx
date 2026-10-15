@@ -22,8 +22,6 @@ interface Props {
 export default function Modal(props: Props) {
     const [currentView, setCurrentView] = createSignal<string>('VectorImage');
 
-    const { msg } = props;
-
     function _close(event: Event) {
         event.stopPropagation();
         if (event.target === event.currentTarget) {
@@ -40,7 +38,7 @@ export default function Modal(props: Props) {
                     </button>
                 </span>
                 <div class='block'>
-                    <div class='title is-1 header-framework-test-solid'>{msg}</div>
+                    <div class='title is-1 header-framework-test-solid'>{props.msg}</div>
 
                     <div class='tabs is-centered is-toggle is-toggle-rounded'>
                         <ul>

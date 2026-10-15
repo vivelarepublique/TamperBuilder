@@ -45,7 +45,7 @@ export function google() {
 function searchInput(selector: CommonSelectors) {
     listenElementChanges(selector, {
         callback: value => {
-            Object.assign(windowProxy, { scriptTemplate: { search: value || '' } });
+            Object.assign(windowProxy, { scriptTemplate: { search: typeof value === 'string' ? value : '' } });
             windowProxy.dispatchEvent(new Event('kwChanged'));
         },
         attributesConcern: 'value',

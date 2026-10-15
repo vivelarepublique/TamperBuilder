@@ -1,13 +1,15 @@
-export function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+export function debounce<TArgs extends unknown[]>(func: (...args: TArgs) => unknown, wait: number): (...args: TArgs) => void {
     let timeout: number | null = null;
 
     return (...args) => {
         if (timeout !== null) window.clearTimeout(timeout);
-        timeout = window.setTimeout(() => func(...args), wait);
+        timeout = window.setTimeout(() => {
+            func(...args);
+        }, wait);
     };
 }
 
-export function throttle<T extends (...args: any[]) => any>(func: T, limit: number): (...args: Parameters<T>) => void {
+export function throttle<TArgs extends unknown[]>(func: (...args: TArgs) => unknown, limit: number): (...args: TArgs) => void {
     let timer: number | null = null;
 
     return (...args) => {

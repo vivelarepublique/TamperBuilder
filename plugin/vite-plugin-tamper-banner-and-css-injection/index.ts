@@ -20,7 +20,7 @@ export default function tamperBannerAndCssInjectionPlugin(config: PluginOption):
             const allCss = cssBundleNames.reduce((accumulator, current) => {
                 const cssSource = (bundle[current] as Rollup.OutputAsset).source;
                 delete bundle[current];
-                return accumulator + cssSource;
+                return accumulator + (typeof cssSource === 'string' ? cssSource : new TextDecoder().decode(cssSource));
             }, '');
 
             const cssCode = allCss.length === 0 ? '' : await cssTemplate(beautifulCss ? splitCssToArray(allCss).join('\n') : allCss, 'tamperTemplateInjection');

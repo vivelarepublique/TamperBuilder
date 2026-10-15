@@ -103,7 +103,7 @@ function stringList(record: Record<string, unknown>, key: string, field: string,
         if (typeof item !== 'string' || item.trim().length === 0) {
             configurationError(`${field}.${key}[${index}]`, 'must be a non-empty string');
         }
-        return item as string;
+        return item;
     });
     if (new Set(values).size !== values.length) {
         configurationError(`${field}.${key}`, 'must not contain duplicates');
@@ -146,14 +146,14 @@ function allowedOrigins(record: Record<string, unknown>, field: string): string[
         }
         let url: URL;
         try {
-            url = new URL(item as string);
+            url = new URL(item);
         } catch {
             configurationError(`${field}.allowedRedirectOrigins[${index}]`, 'must be a valid HTTPS origin');
         }
         if (url.protocol !== 'https:' || url.origin !== item || url.username || url.password) {
             configurationError(`${field}.allowedRedirectOrigins[${index}]`, 'must be an HTTPS origin without credentials, path, query, or fragment');
         }
-        return item as string;
+        return item;
     });
     if (new Set(origins).size !== origins.length) configurationError(`${field}.allowedRedirectOrigins`, 'must not contain duplicates');
     return origins;
@@ -221,7 +221,7 @@ export function loadBannerConfig(options: ConfigurationOptions = {}): ScriptInfo
         runIn,
         sandbox,
         tag,
-        noframes: noframes as boolean | undefined,
+        noframes: noframes,
         grant: grants,
         connect: connects,
     };

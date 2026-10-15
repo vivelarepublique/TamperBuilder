@@ -1,10 +1,12 @@
+type MutationCallback = (...args: unknown[]) => void;
+
 export interface ListenOptions {
     strictMode?: boolean;
     anyMutation?: boolean;
-    callback?: (...args: any[]) => any;
+    callback?: MutationCallback;
     attributesConcern?: string;
     childrenConcern?: {
-        action: (...args: any[]) => any;
+        action: MutationCallback;
         selector: string;
     }[];
     immediateImplementation?: boolean;

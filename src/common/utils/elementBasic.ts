@@ -30,15 +30,16 @@ export function getMultiElement(selector: string | CommonSelectors, refer?: Docu
 
 export function removeElement(element: HTMLElement | CommonSelectors | string) {
     const elementNode = typeof element === 'string' || !(element instanceof HTMLElement) ? getElement(element) : element;
-    elementNode && elementNode.remove();
+    if (elementNode) elementNode.remove();
 }
 
 export function appendElement(parent: HTMLElement, child: HTMLElement | string, refer?: HTMLElement) {
     const childNode = typeof child === 'string' ? document.createTextNode(child) : child;
-    refer instanceof HTMLElement ? parent.insertBefore(childNode, refer) : parent.appendChild(childNode);
+    if (refer instanceof HTMLElement) parent.insertBefore(childNode, refer);
+    else parent.appendChild(childNode);
 }
 
-export function updateElementAttribute<T extends keyof HTMLElementTagNameMap, D extends keyof HTMLElementDeprecatedTagNameMap>(element: HTMLElement, options?: ElementAttributeOptions<T, D>): ElementType<T, D> {
+export function updateElementAttribute<T extends keyof HTMLElementTagNameMap, D extends keyof HTMLElementDeprecatedTagNameMap>(element: HTMLElement, options?: ElementAttributeOptions<T, D>): ElementType {
     const { props, styles, event } = options || {};
     if (props) {
         Object.assign(element, props);
@@ -49,13 +50,14 @@ export function updateElementAttribute<T extends keyof HTMLElementTagNameMap, D 
     }
 
     if (event) {
-        Array.isArray(event) ? event.forEach(e => element.addEventListener(e.type, e.listener, e.options)) : element.addEventListener(event.type, event.listener, event.options);
+        if (Array.isArray(event)) event.forEach(e => element.addEventListener(e.type, e.listener, e.options));
+        else element.addEventListener(event.type, event.listener, event.options);
     }
 
     return element;
 }
 
-export function createElementWithAttributes<T extends keyof HTMLElementTagNameMap, D extends keyof HTMLElementDeprecatedTagNameMap>(tagName: T | D | string, options?: ElementAttributeOptions<T, D>): ElementType<T, D> {
+export function createElementWithAttributes<T extends keyof HTMLElementTagNameMap, D extends keyof HTMLElementDeprecatedTagNameMap>(tagName: T | D | string, options?: ElementAttributeOptions<T, D>): ElementType {
     const element = document.createElement(tagName);
     return updateElementAttribute(element, options);
 }

@@ -61,8 +61,10 @@ export function splitCssToArray(cssContent: string, sortByOrder: boolean = false
             finishFlag = true;
             cssResult.push(`${tempArray.join('')}}`);
             tempArray.length = 0;
+        } else if (finishFlag) {
+            cssResult.push(`${rule}}`);
         } else {
-            finishFlag ? cssResult.push(`${rule}}`) : tempArray.push(`${rule}}`);
+            tempArray.push(`${rule}}`);
         }
     }
     return sortByOrder ? cssResult.sort() : cssResult;

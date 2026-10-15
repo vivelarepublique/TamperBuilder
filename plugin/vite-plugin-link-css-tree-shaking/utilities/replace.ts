@@ -8,6 +8,13 @@ export function simplifySelector(selector: string): string {
     return selector.replaceAll(/[\+\>\*]|\[.*?\]|:{1,2}[a-z-]+(\(.*?\))?/g, '');
 }
 
+function replaceVariable(value: string, variables: Map<string, string>): string {
+    return value.replaceAll(/var\(.+?\)/g, substring => {
+        const variableName = substring.match(/(?<=var\().+?(?=\))/)?.[0];
+        return variableName !== undefined && variables.has(variableName) ? variables.get(variableName)! : substring;
+    });
+}
+
 export function replaceValueUsed(sentencesArray: KeyAndValueObject[], filteredCssRules: string[]): string[] {
     const array = sentencesArray.filter(i => i.key && i.value);
     const map = new Map<string, string>();
@@ -28,10 +35,7 @@ export function replaceValueUsed(sentencesArray: KeyAndValueObject[], filteredCs
 
     for (const obj of secondArray) {
         const { key, value } = obj;
-        const replaced = value.replaceAll(/var\(.+?\)/g, substring => {
-            const value = substring.match(/(?<=var\().+?(?=\))/)?.[0]!;
-            return map.has(value) ? map.get(value)! : substring;
-        });
+        const replaced = replaceVariable(value, map);
         if (replaced.includes('var(')) {
             thirdArray.push(obj);
         } else {
@@ -41,19 +45,8 @@ export function replaceValueUsed(sentencesArray: KeyAndValueObject[], filteredCs
 
     for (const obj of thirdArray) {
         const { key, value } = obj;
-        const replaced = value.replaceAll(/var\(.+?\)/g, substring => {
-            const value = substring.match(/(?<=var\().+?(?=\))/)?.[0]!;
-            return map.has(value) ? map.get(value)! : substring;
-        });
-        map.set(key, replaced);
+        map.set(key, replaceVariable(value, map));
     }
 
-    const replacedCss = filteredCssRules.map(i => {
-        return i.replaceAll(/var\(.+?\)/g, substring => {
-            const value = substring.match(/(?<=var\().+?(?=\))/)?.[0]!;
-            return map.has(value) ? map.get(value)! : substring;
-        });
-    });
-
-    return replacedCss;
+    return filteredCssRules.map(value => replaceVariable(value, map));
 }

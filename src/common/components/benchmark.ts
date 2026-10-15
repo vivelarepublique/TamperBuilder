@@ -4,7 +4,7 @@ export interface RandomColor {
     id: number;
 }
 
-export function measureRenderTime(renderFunction: Function, renderCount: number, recordFunction: (time: number) => any) {
+export function measureRenderTime(renderFunction: (renderCount: number) => void, renderCount: number, recordFunction: (time: number) => void): void {
     const startTime = performance.now();
     requestAnimationFrame(() => {
         renderFunction(renderCount);

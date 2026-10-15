@@ -44,7 +44,7 @@ export interface FiltrationCondition {
 export interface HTMLStructure {
     html: {
         head: {
-            meta: any[];
+            meta: unknown[];
             title: string;
             link?: StylesheetLink | StylesheetLink[];
         };

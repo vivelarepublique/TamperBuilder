@@ -6,13 +6,13 @@ import type { ScriptInformationParameters } from '../interfaces/index.ts';
 
 export { splitCssToArray } from './split.ts';
 
-export async function cssTemplate(code: string, name: string): Promise<string> {
+export function cssTemplate(code: string, name: string): Promise<string> {
     const cssCode = JSON.stringify(code).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
     const hashSub = hash(code).substring(0, 16);
-    return /*javascript*/ `const ${name}_${hashSub} = document.createElement('style');
+    return Promise.resolve(/*javascript*/ `const ${name}_${hashSub} = document.createElement('style');
 const ${name}_${hashSub}_Code = document.createTextNode(${cssCode});
 ${name}_${hashSub}.appendChild(${name}_${hashSub}_Code);
-document.head.appendChild(${name}_${hashSub});`;
+document.head.appendChild(${name}_${hashSub});`);
 }
 
 export function bannerTemplate(details: ScriptInformationParameters) {

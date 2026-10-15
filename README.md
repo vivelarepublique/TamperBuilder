@@ -75,7 +75,7 @@ Run the complete local quality gate with:
 npm run check
 ```
 
-This audits dependencies, type-checks the project, runs unit tests, verifies framework selection with real builds, and checks all three supported build modes. A successful Vite build proves only generated-file and module-graph contracts; it does not prove behavior in a browser or Tampermonkey.
+This audits dependencies, lints and type-checks the project, runs unit tests, verifies framework selection with real builds, and checks all three supported build modes. A successful Vite build proves only generated-file and module-graph contracts; it does not prove behavior in a browser or Tampermonkey.
 
 ## Explicit userscript permissions
 

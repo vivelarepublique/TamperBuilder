@@ -14,7 +14,7 @@
         <img src={svelteLogo} class="ft-button-logo" alt="Svelte logo" />
     </button>
     {#if $show}
-        <Modal msg={'Welcome Svelte'} />
+        <Modal msg="Welcome Svelte" />
     {/if}
 </main>
 

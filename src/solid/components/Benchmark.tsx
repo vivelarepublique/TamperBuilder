@@ -41,7 +41,7 @@ export default function Counter() {
 
             <div class='columns is-multiline'>
                 <Index each={divList()}>
-                    {(ds, index) => (
+                    {ds => (
                         <div class='column is-1' style={{ 'background-color': ds().backgroundColor, color: ds().color, 'font-size': '8px' }}>
                             Div# {ds().id}
                         </div>
