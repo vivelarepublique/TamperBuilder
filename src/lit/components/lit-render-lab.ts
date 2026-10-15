@@ -29,7 +29,6 @@ export class LitRenderLab extends BaseComponent {
 
     private get running(): boolean { return this.status.kind === 'running'; }
     private get strictInitial(): boolean { return this.size === 1000 && this.rows.length === 0 && this.metrics === null && this.status.kind === 'idle' && this.inputError === null; }
-    private readonly setRows = (rows: readonly BenchmarkRow[]) => { this.rows = rows; };
     private readonly visibilityChanged = () => { if (document.hidden && this.running) this.cancel(); };
     private invalidateRun(): void { this.controller?.abort(); this.runSequence += 1; this.activeRunId = null; this.controller = null; }
     private cancel(): void { if (!this.running) return; this.invalidateRun(); this.rows = []; this.metrics = null; this.status = { kind: 'canceled' }; }
@@ -47,7 +46,10 @@ export class LitRenderLab extends BaseComponent {
         this.rows = []; this.metrics = null; this.status = { kind: 'running', runId };
         try {
             const dependencies = this.workbench.dependencies;
-            const result = await dependencies.runScenario({ size: this.size, adapter: { replaceRows: this.setRows, updateRows: this.setRows, removeRows: this.setRows, clearRows: this.setRows }, scheduler: dependencies.scheduler, signal: activeController.signal });
+            const commitRows = (rows: readonly BenchmarkRow[]) => {
+                if (this.activeRunId === runId && !activeController.signal.aborted && this.mounted) this.rows = rows;
+            };
+            const result = await dependencies.runScenario({ size: this.size, adapter: { replaceRows: commitRows, updateRows: commitRows, removeRows: commitRows, clearRows: commitRows }, scheduler: dependencies.scheduler, signal: activeController.signal });
             if (this.activeRunId !== runId || activeController.signal.aborted || !this.mounted) return;
             formatMilliseconds(result.createMs); formatMilliseconds(result.updateMs); formatMilliseconds(result.removeMs);
             if (!Number.isInteger(result.remainingRows) || result.remainingRows < 0) throw new RangeError('Remaining rows must be a non-negative integer.');

@@ -12,13 +12,20 @@ const vueOnly: FrameworkConfiguration[] = [
         componentsFilesPaths: 'src/vue/components',
     },
 ];
+const svelteOnly: FrameworkConfiguration[] = [
+    {
+        framework: 'svelte',
+        nickname: 'svelte',
+        componentsFilesPaths: 'src/svelte/components',
+    },
+];
 
 describe('framework virtual entry', () => {
     it('generates static imports and adapters only for selected frameworks', () => {
         const code = createFrameworkEntryCode(vueOnly);
 
         expect(code).toContain("from \"/src/vue\"");
-        expect(code).toContain('() => void mountFramework0(frameworkTargets[0])');
+        expect(code).toContain('() => { void mountFramework0(frameworkTargets[0]); }');
         expect(code).not.toMatch(/\/src\/(react|preact|lit|svelte|solid)/);
     });
 
@@ -34,7 +41,7 @@ describe('framework virtual entry', () => {
         target.id = 'demoApp';
 
         expect(code).toContain('const divFrameworkNicknames = ["demo"]');
-        expect(code).toContain('() => void mountFramework0(frameworkTargets[0])');
+        expect(code).toContain('() => { void mountFramework0(frameworkTargets[0]); }');
         createLit(target);
 
         expect(target.firstElementChild?.tagName.toLowerCase()).toBe('lit-app');
@@ -51,7 +58,12 @@ describe('framework virtual entry', () => {
         expect(forbidden).toEqual(['/project/node_modules/react/index.js', '/project/src/react/index.tsx']);
     });
 
-    it('accepts a Vue-only graph', () => {
+    it('accepts isolated Vue and Svelte graphs', () => {
         expect(validateFrameworkModuleGraph(vueOnly, ['/project/src/vue/index.ts', '/project/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-bundler.js'])).toEqual([]);
+        expect(validateFrameworkModuleGraph(svelteOnly, ['/project/src/svelte/index.ts', '/project/node_modules/svelte/src/index-client.js'])).toEqual([]);
+    });
+
+    it('reports non-Svelte modules in a Svelte-only graph', () => {
+        expect(validateFrameworkModuleGraph(svelteOnly, ['/project/src/svelte/index.ts', '/project/src/vue/index.ts'])).toEqual(['/project/src/vue/index.ts']);
     });
 });

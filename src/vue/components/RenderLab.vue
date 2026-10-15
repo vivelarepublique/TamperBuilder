@@ -50,10 +50,6 @@
         }
     });
 
-    function setRows(nextRows: readonly BenchmarkRow[]): void {
-        rows.value = nextRows;
-    }
-
     function invalidateRun(): void {
         controller?.abort();
         runSequence += 1;
@@ -104,9 +100,12 @@
         metrics.value = null;
         status.value = { kind: 'running', runId };
         try {
+            const commitRows = (nextRows: readonly BenchmarkRow[]) => {
+                if (activeRunId === runId && !activeController.signal.aborted && mounted) rows.value = nextRows;
+            };
             const result = await props.dependencies.runScenario({
                 size: size.value,
-                adapter: { replaceRows: setRows, updateRows: setRows, removeRows: setRows, clearRows: setRows },
+                adapter: { replaceRows: commitRows, updateRows: commitRows, removeRows: commitRows, clearRows: commitRows },
                 scheduler: props.dependencies.scheduler,
                 signal: activeController.signal,
             });

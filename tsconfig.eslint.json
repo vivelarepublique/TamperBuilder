@@ -4,6 +4,7 @@
         "allowJs": true,
         "checkJs": true,
         "composite": false,
+        "jsx": "preserve",
         "noEmit": true
     },
     "include": ["tests/**/*.ts", "scripts/**/*.mjs", "src/index.ts", "vitest.config.ts"]

@@ -10,6 +10,7 @@ const temporaryDirectory = mkdtempSync(path.join(tmpdir(), 'tamper-builder-frame
 const budgets = {
     showcase: 2 * 1024 * 1024,
     vue: 750 * 1024,
+    svelte: 750 * 1024,
 };
 
 function run(command, args, environment = {}) {
@@ -43,6 +44,15 @@ function buildAndInspect(name, environment, budget) {
     };
 }
 
+function assertIsolated(name, build, expectedFramework, forbiddenPatterns) {
+    if (build.report.selected.length !== 1 || build.report.selected[0] !== expectedFramework) {
+        throw new Error(`${name} selected frameworks were ${JSON.stringify(build.report.selected)}, expected only ${expectedFramework}`);
+    }
+    const normalizedModules = build.report.modules.map(moduleId => moduleId.replaceAll('\\', '/'));
+    const forbiddenModules = normalizedModules.filter(moduleId => forbiddenPatterns.some(pattern => pattern.test(moduleId)));
+    if (forbiddenModules.length > 0) throw new Error(`${name} graph contains forbidden modules:\n${forbiddenModules.join('\n')}`);
+}
+
 try {
     const showcase = buildAndInspect('showcase', {}, budgets.showcase);
     if (showcase.report.selected.length !== 6) {
@@ -54,20 +64,28 @@ try {
         { TAMPER_BUILDER_FRAMEWORK_CONFIG: path.join(projectRoot, 'tests/fixtures/config/vue-only.yaml') },
         budgets.vue,
     );
-    const forbiddenPatterns = [
+    assertIsolated('Vue-only', vue, 'vue', [
         /\/src\/(react|preact|lit|svelte|solid)\//,
         /\/node_modules\/(react|react-dom|zustand|preact|@preact|lit|@lit|lit-element|lit-html|svelte|solid-js)\//,
-    ];
-    const normalizedModules = vue.report.modules.map(moduleId => moduleId.replaceAll('\\', '/'));
-    const forbiddenModules = normalizedModules.filter(moduleId => forbiddenPatterns.some(pattern => pattern.test(moduleId)));
-    if (forbiddenModules.length > 0) {
-        throw new Error(`Vue-only graph contains forbidden modules:\n${forbiddenModules.join('\n')}`);
-    }
-    if (vue.size >= showcase.size) {
-        throw new Error(`Vue-only output (${vue.size} bytes) must be smaller than showcase output (${showcase.size} bytes)`);
+    ]);
+
+    const svelte = buildAndInspect(
+        'svelte',
+        { TAMPER_BUILDER_FRAMEWORK_CONFIG: path.join(projectRoot, 'tests/fixtures/config/svelte-only.yaml') },
+        budgets.svelte,
+    );
+    assertIsolated('Svelte-only', svelte, 'svelte', [
+        /\/src\/(vue|react|preact|lit|solid)\//,
+        /\/node_modules\/(vue|@vue|pinia|react|react-dom|zustand|preact|@preact|lit|@lit|lit-element|lit-html|solid-js)\//,
+    ]);
+
+    if (vue.size >= showcase.size || svelte.size >= showcase.size) {
+        throw new Error(`Isolated outputs (Vue ${vue.size}, Svelte ${svelte.size}) must be smaller than showcase output (${showcase.size})`);
     }
 
-    console.log(`Framework selection verified: showcase=${showcase.size} bytes, Vue-only=${vue.size} bytes; unselected sources and runtimes absent.`);
+    console.log(
+        `Framework selection verified: showcase=${showcase.size} bytes, Vue-only=${vue.size} bytes, Svelte-only=${svelte.size} bytes; unselected sources and runtimes absent.`,
+    );
 } finally {
     rmSync(temporaryDirectory, { force: true, recursive: true });
 }

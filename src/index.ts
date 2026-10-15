@@ -21,7 +21,14 @@ const [vue, react, preact, lit, svelte, solid] = getMultiDivAppElement(['vue', '
 void startMain(
     {
         beforeMount: beforeMountEvent,
-        mounts: [() => createVue(vue), () => createReact(react), () => createPreact(preact), () => createLit(lit), () => createSvelte(svelte), () => createSolid(solid)],
+        mounts: [
+            () => void createVue(vue),
+            () => void createReact(react),
+            () => void createPreact(preact),
+            () => void createLit(lit),
+            () => void createSvelte(svelte),
+            () => void createSolid(solid),
+        ],
         afterMount: afterMountEvent,
     },
     error => console.error('TamperBuilder failed to initialize.', error),

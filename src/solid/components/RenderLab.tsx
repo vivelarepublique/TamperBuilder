@@ -16,8 +16,6 @@ export default function RenderLab(props: { readonly nickname: string; readonly d
     const running = createMemo(() => status().kind === 'running');
     const strictInitial = createMemo(() => size() === 1000 && rows().length === 0 && metrics() === null && status().kind === 'idle' && inputError() === null);
     const statusCopy = createMemo(() => { switch (status().kind) { case 'running': return 'Running…'; case 'success': return 'Scenario complete.'; case 'startHidden': return 'Keep this page visible, then try again.'; case 'canceled': return 'Scenario canceled.'; case 'timeout': return 'Scenario timed out. Try again or reset.'; case 'error': return 'Scenario could not complete.'; default: return ''; } });
-    const adapter = { replaceRows: setRows, updateRows: setRows, removeRows: setRows, clearRows: setRows };
-
     function invalidateRun(): void { controller?.abort(); runSequence += 1; activeRunId = null; controller = null; }
     function cancel(): void { if (!running()) return; invalidateRun(); batch(() => { setRows([]); setMetrics(null); setStatus({ kind: 'canceled' }); }); }
     function reset(): void { if (running() || strictInitial()) return; batch(() => { setSize(1000); setRows([]); setMetrics(null); setStatus({ kind: 'idle' }); setInputError(null); }); }
@@ -30,6 +28,10 @@ export default function RenderLab(props: { readonly nickname: string; readonly d
         const activeController = new AbortController(); controller = activeController;
         batch(() => { setRows([]); setMetrics(null); setStatus({ kind: 'running', runId }); });
         try {
+            const commitRows = (nextRows: readonly BenchmarkRow[]) => {
+                if (activeRunId === runId && !activeController.signal.aborted && mounted) setRows(nextRows);
+            };
+            const adapter = { replaceRows: commitRows, updateRows: commitRows, removeRows: commitRows, clearRows: commitRows };
             const result = await props.dependencies.runScenario({ size: size(), adapter, scheduler: props.dependencies.scheduler, signal: activeController.signal });
             if (activeRunId !== runId || activeController.signal.aborted || !mounted) return;
             formatMilliseconds(result.createMs); formatMilliseconds(result.updateMs); formatMilliseconds(result.removeMs);

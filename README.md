@@ -35,6 +35,23 @@
 
 The default `config/global-configuration.yaml` deliberately selects all six frameworks as a showcase.
 
+## Component Lab showcase
+
+Each selected framework mounts the same **Component Lab** UX: a launcher opens a native modal dialog with a deterministic Task workbench and a bounded Render scenario. Apart from each framework logo and its existing animation, the six implementations intentionally share the same copy, DOM structure, controls, responsive layout, focus behavior, and accessibility semantics.
+
+| Framework | Framework-native idioms demonstrated |
+| --- | --- |
+| Vue | Composition API refs/computed state, Pinia setup stores, `v-model`, keyed `v-for`, and lifecycle hooks |
+| React | Per-root Zustand vanilla stores, Context, controlled fields, memoized derivations, functional updates, and effect cleanup |
+| Preact | Per-root Signals, computed values, batching, hooks, Context, and keyed rendering |
+| Lit | Light DOM web components, reactive properties, subscribed context, typed bubbling commands, and `repeat()` keys |
+| Svelte | Svelte 5 rune factories, `$derived`, `bind:value`, keyed `each`, `tick`, and lifecycle cleanup |
+| Solid | Root-owned signals/memos, batching, Context, `<For>`/`<Show>`, and owner cleanup |
+
+The Task fixture always starts with the same three rows and exercises native form submission, Unicode-aware validation, search/filter derivation, CRUD focus recovery, progress, and structural reset. The Render tab always runs the same deterministic warm-up plus create/update/remove scenario for 250, 1,000, or 2,000 rows, with cancellation, timeout, hidden-page, error, and stale-result guards.
+
+Render timings describe one interaction on the current page, device, and build. They are **not a scientific cross-framework benchmark**, must not be used to rank frameworks, and have no fixed performance threshold.
+
 ## Building Tool
 
 - [Vite](https://github.com/vitejs/vite)
@@ -103,7 +120,7 @@ Select one or more frameworks in `config/global-configuration.yaml`. Each record
 
 The generated virtual entry statically imports only selected application sources. Vite loads only selected framework transforms, and the build fails if an unselected framework source or runtime enters the application module graph. Lit does not require a framework Vite plugin. Do not delete unselected source directories or manually edit `src/index.ts`; selection is controlled by validated YAML.
 
-You can verify the default six-framework showcase and the Vue-only fixture with:
+You can verify the default six-framework showcase plus the isolated Vue-only and Svelte-only fixtures with:
 
 ```bash
 npm run verify:frameworks

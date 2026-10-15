@@ -77,14 +77,12 @@ export default function RenderLab({ nickname, dependencies }: { readonly nicknam
         controllerRef.current = activeController;
         model.setRunning(runId);
         try {
+            const commitRows = (rows: readonly BenchmarkRow[]) => {
+                if (activeRunIdRef.current === runId && !activeController.signal.aborted && mountedRef.current) model.setRows(rows);
+            };
             const result = await dependencies.runScenario({
                 size: model.size.value,
-                adapter: {
-                    replaceRows: rows => model.setRows(rows),
-                    updateRows: rows => model.setRows(rows),
-                    removeRows: rows => model.setRows(rows),
-                    clearRows: rows => model.setRows(rows),
-                },
+                adapter: { replaceRows: commitRows, updateRows: commitRows, removeRows: commitRows, clearRows: commitRows },
                 scheduler: dependencies.scheduler,
                 signal: activeController.signal,
             });

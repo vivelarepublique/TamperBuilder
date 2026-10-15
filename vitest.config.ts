@@ -9,7 +9,7 @@ export default defineConfig({
     plugins: [
         vue(),
         react({ include: ['src/react/**/*.{tsx,ts,jsx,js}'] }),
-        preact({ include: ['src/preact/**/*.{tsx,ts,jsx,js}'] }),
+        preact({ include: ['src/preact/**/*.{tsx,ts,jsx,js}'], reactAliasesEnabled: false, babel: {} }),
         svelte({ preprocess: vitePreprocess() }),
         solid({ include: ['src/solid/**/*.{tsx,ts,jsx,js}'] }),
     ],

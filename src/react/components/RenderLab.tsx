@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     formatMilliseconds,
     isAbortError,
@@ -43,8 +43,6 @@ export default function RenderLab({ nickname, dependencies }: { readonly nicknam
     const mounted = useRef(true);
     const running = status.kind === 'running';
     const strictInitial = size === 1000 && rows.length === 0 && metrics === null && status.kind === 'idle' && inputError === null;
-    const adapter = useMemo(() => ({ replaceRows: setRows, updateRows: setRows, removeRows: setRows, clearRows: setRows }), []);
-
     const invalidateRun = useCallback(() => {
         controller.current?.abort();
         runSequence.current += 1;
@@ -88,6 +86,10 @@ export default function RenderLab({ nickname, dependencies }: { readonly nicknam
         setMetrics(null);
         setStatus({ kind: 'running', runId });
         try {
+            const commitRows = (nextRows: readonly BenchmarkRow[]) => {
+                if (activeRunId.current === runId && !activeController.signal.aborted && mounted.current) setRows(nextRows);
+            };
+            const adapter = { replaceRows: commitRows, updateRows: commitRows, removeRows: commitRows, clearRows: commitRows };
             const result = await dependencies.runScenario({ size, adapter, scheduler: dependencies.scheduler, signal: activeController.signal });
             if (activeRunId.current !== runId || activeController.signal.aborted || !mounted.current) return;
             formatMilliseconds(result.createMs);
