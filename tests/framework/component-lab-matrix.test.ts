@@ -316,6 +316,48 @@ for (const factory of harnessFactories) {
             });
         });
 
+        it('clears completed tasks from every filtered search view and keeps the disabled handler inert', async () => {
+            await withHarness(factory, async harness => {
+                await harness.mount();
+                const target = await openLab(harness);
+                const cases = [
+                    { filter: 'all' as const, query: 'verify', visibleIds: ['2'] },
+                    { filter: 'open' as const, query: 'review', visibleIds: ['1'] },
+                    { filter: 'done' as const, query: 'metadata', visibleIds: ['2'] },
+                ];
+
+                for (const [index, testCase] of cases.entries()) {
+                    if (index > 0) await click(harness, getByRole(target, 'task-reset'));
+                    await chooseFilter(harness, target, testCase.filter);
+                    const search = getByRole<HTMLInputElement>(target, 'task-search');
+                    await setValue(harness, search, testCase.query);
+                    expect(Array.from(target.querySelectorAll<HTMLElement>('[data-ft-role="task-row"]'), row => row.querySelector('[data-ft-role="task-toggle"]')?.getAttribute('data-task-id'))).toEqual(testCase.visibleIds);
+
+                    const clear = getByRole<HTMLButtonElement>(target, 'task-clear');
+                    expect(clear.disabled).toBe(false);
+                    await click(harness, clear);
+                    expect(getByRole(target, 'task-summary').textContent).toBe('2 open · 0 done · 2 total');
+                    expect(clear.disabled).toBe(true);
+                    expect(document.activeElement).toBe(getByRole(target, 'task-title'));
+
+                    await chooseFilter(harness, target, 'all');
+                    await setValue(harness, search, '');
+                    expect(Array.from(target.querySelectorAll<HTMLInputElement>('[data-ft-role="task-toggle"]'), toggle => [toggle.dataset.taskId, toggle.checked])).toEqual([
+                        ['1', false], ['3', false],
+                    ]);
+
+                    const stateBeforeDisabledClick = target.querySelector('[data-ft-role="task-list"]')?.textContent;
+                    search.focus();
+                    clear.disabled = false;
+                    await click(harness, clear);
+                    expect(target.querySelector('[data-ft-role="task-list"]')?.textContent).toBe(stateBeforeDisabledClick);
+                    expect(getByRole(target, 'task-summary').textContent).toBe('2 open · 0 done · 2 total');
+                    expect(document.activeElement).toBe(search);
+                    clear.disabled = true;
+                }
+            });
+        });
+
         it('covers the complete Render control, preservation, error, and Reset matrix', async () => {
             await withHarness(factory, async harness => {
                 let scenario: 'success' | 'deferred' | 'timeout' | 'error' | 'nonfinite' = 'success';
@@ -356,6 +398,31 @@ for (const factory of harnessFactories) {
                 await setValue(harness, size, '1000');
                 expect(size.hasAttribute('aria-invalid')).toBe(false);
                 expect(getByRole(target, 'render-status').textContent).toBe('Scenario complete.');
+
+                const preservationHiddenDescriptor = Object.getOwnPropertyDescriptor(document, 'hidden');
+                const NativeAbortController = globalThis.AbortController;
+                let controllerCreations = 0;
+                class TrackingAbortController extends NativeAbortController {
+                    constructor() {
+                        super();
+                        controllerCreations += 1;
+                    }
+                }
+                const runnerCallsBeforeHidden = runner.mock.calls.length;
+                vi.stubGlobal('AbortController', TrackingAbortController);
+                try {
+                    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+                    await click(harness, run);
+                    expectRenderControls(target, { sizeDisabled: false, runDisabled: false, secondaryText: 'Reset', secondaryDisabled: false, status: 'Keep this page visible, then try again.' });
+                    expect(Array.from(target.querySelectorAll('[data-ft-role="render-row"] td'), cell => cell.textContent)).toEqual(successCells);
+                    expect(Array.from(target.querySelectorAll('[data-ft-role^="metric-"] dd'), cell => cell.textContent)).toEqual(successMetrics);
+                    expect(runner).toHaveBeenCalledTimes(runnerCallsBeforeHidden);
+                    expect(controllerCreations).toBe(0);
+                } finally {
+                    if (preservationHiddenDescriptor === undefined) delete (document as Document & { hidden?: boolean }).hidden;
+                    else Object.defineProperty(document, 'hidden', preservationHiddenDescriptor);
+                    vi.unstubAllGlobals();
+                }
 
                 await setValue(harness, size, '999');
                 await click(harness, run);

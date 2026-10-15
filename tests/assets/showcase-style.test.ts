@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { act } from 'react';
 import { describe, expect, it } from 'vitest';
 import { createReactHarness } from '../framework/harness/react';
@@ -26,6 +29,89 @@ function expectHostRuleIsolated(element: Element): void {
     expect(style.display).not.toBe('none');
     expect(style.color).not.toBe('rgb(255, 0, 0)');
     expect(style.marginTop).not.toBe('99px');
+}
+
+interface BrowserLayoutResult {
+    readonly clientWidth: number;
+    readonly innerWidth: number;
+    readonly scrollWidth: number;
+    readonly undersizedTargets: readonly string[];
+}
+
+function findBrowserExecutable(): string {
+    const candidates = [
+        process.env.CHROME_PATH,
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+        '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+        '/usr/bin/google-chrome',
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser',
+    ];
+    const executable = candidates.find((candidate): candidate is string => candidate !== undefined && existsSync(candidate));
+    if (executable === undefined) {
+        throw new Error('A Chrome-compatible browser is required for the Component Lab page-overflow layout contract.');
+    }
+    return executable;
+}
+
+function expectBrowserLayout(width: number, markup: string, hostileCss: string): void {
+    const directory = mkdtempSync(path.join(tmpdir(), 'tamper-builder-layout-'));
+    const documentPath = path.join(directory, 'component-lab.html');
+    const profilePath = path.join(directory, 'profile');
+    const browser = findBrowserExecutable();
+    const innerDocument = `<!doctype html>
+        <html><head><meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>${hostileCss}\n${css}</style></head><body>${markup}</body></html>`;
+    const probe = `
+        const frame = document.getElementById('layout-frame');
+        frame.addEventListener('load', () => {
+            const frameDocument = frame.contentDocument;
+            const root = frameDocument.documentElement;
+            const body = frameDocument.body;
+            const undersizedTargets = Array.from(frameDocument.querySelectorAll('button, .ft-showcase-choice'))
+                .filter(element => {
+                    const rect = element.getBoundingClientRect();
+                    return rect.width < 44 || rect.height < 44;
+                })
+                .map(element => element.getAttribute('data-ft-role') || element.className);
+            const result = document.createElement('pre');
+            result.id = 'layout-result';
+            result.textContent = JSON.stringify({
+                clientWidth: root.clientWidth,
+                innerWidth: frame.contentWindow.innerWidth,
+                scrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
+                undersizedTargets,
+            });
+            document.body.append(result);
+        });
+        frame.srcdoc = ${JSON.stringify(innerDocument)};
+    `;
+    writeFileSync(documentPath, `<!doctype html><html><body style="margin:0">
+        <iframe id="layout-frame" style="border:0;width:${width}px;height:${width === 390 ? 844 : 900}px"></iframe>
+        <script>${probe}</script></body></html>`);
+
+    try {
+        const result = spawnSync(browser, [
+            '--headless=new',
+            '--disable-gpu',
+            `--user-data-dir=${profilePath}`,
+            `--window-size=${width},${width === 390 ? 844 : 900}`,
+            '--force-device-scale-factor=1',
+            '--dump-dom',
+            pathToFileURL(documentPath).href,
+        ], { encoding: 'utf8', timeout: 30_000 });
+        if (result.error !== undefined) throw result.error;
+        expect(result.status, result.stderr).toBe(0);
+        const match = result.stdout.match(/<pre id="layout-result">([^<]+)<\/pre>/u);
+        if (match?.[1] === undefined) throw new Error('Headless browser did not return Component Lab layout measurements.');
+        const layout = JSON.parse(match[1]) as BrowserLayoutResult;
+        expect(layout.innerWidth).toBe(width);
+        expect(layout.clientWidth).toBe(width);
+        expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth);
+        expect(layout.undersizedTargets).toEqual([]);
+    } finally {
+        rmSync(directory, { force: true, recursive: true });
+    }
 }
 
 async function renderLabAtViewport(width: number): Promise<void> {
@@ -110,6 +196,7 @@ async function renderLabAtViewport(width: number): Promise<void> {
         expect([getComputedStyle(image).display, getComputedStyle(image).boxSizing, getComputedStyle(image).width, getComputedStyle(image).height]).toEqual([
             'block', 'border-box', '24px', '24px',
         ]);
+        expectBrowserLayout(width, rail.outerHTML, hostStyle.textContent ?? '');
     } finally {
         await harness.unmount();
         hostStyle.remove();
@@ -139,9 +226,9 @@ describe('Component Lab visual contract', () => {
         expect(css).toContain('height: 240px');
     });
 
-    it.each([1440, 390])('restores semantic baselines against ordinary host rules at %ipx', async width => {
+    it.each([1440, 390])('restores semantic baselines and page geometry against ordinary host rules at %ipx', async width => {
         await renderLabAtViewport(width);
-    });
+    }, 60_000);
 
     it('uses portable backgrounds for choice indicators and preserves native input states', () => {
         expect(css).not.toMatch(/\.ft-showcase-choice::(?:before|after)/u);
