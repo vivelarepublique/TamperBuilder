@@ -15,6 +15,7 @@ exports[`userscript metadata > renders only explicitly validated grants and conn
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @connect      dailybing.com
+// @connect      global.bing.com
 // ==/UserScript==
 "
 `;

@@ -14,3 +14,4 @@ grant:
     - unsafeWindow
 connect:
     - dailybing.com
+    - global.bing.com

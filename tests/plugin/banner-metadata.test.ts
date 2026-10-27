@@ -9,7 +9,8 @@ describe('userscript metadata', () => {
         expect(metadata).toMatchSnapshot();
         expect(metadata).toContain('// @grant        GM_xmlhttpRequest');
         expect(metadata).toContain('// @grant        unsafeWindow');
-        expect(metadata).toContain('// @connect      dailybing.com');
+        const connectHosts = [...metadata.matchAll(/^\/\/ @connect\s+(\S+)$/gm)].map((match) => match[1]);
+        expect(connectHosts).toEqual(['dailybing.com', 'global.bing.com']);
         expect(metadata).not.toContain('window.onurlchange');
         expect(metadata).not.toMatch(/(?:vuejs|reactjs|preactjs|lit\.dev|svelte|solidjs)\./);
     });

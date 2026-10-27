@@ -104,7 +104,7 @@ This audits dependencies, lints and type-checks the project, runs unit tests, ve
 
 ## Explicit userscript permissions
 
-`config/banner.yaml` is the only authority for generated `@grant` and `@connect` metadata. The default sample explicitly declares exactly the APIs and host it currently uses:
+`config/banner.yaml` is the only authority for generated `@grant` and `@connect` metadata. The default sample explicitly declares exactly the APIs and hosts it currently uses:
 
 ```yaml
 grant:
@@ -112,6 +112,7 @@ grant:
     - unsafeWindow
 connect:
     - dailybing.com
+    - global.bing.com
 ```
 
 Grants must be from the project's approved list, and connect entries must be explicit hostnames. Wildcards, URL schemes, paths, ports, inferred bundle references, `window.onurlchange`, and framework documentation hosts are rejected or ignored rather than added automatically.
