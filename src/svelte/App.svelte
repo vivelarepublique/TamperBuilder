@@ -18,5 +18,5 @@
     let launcher = $state<HTMLButtonElement>();
 </script>
 
-<button bind:this={launcher} class="ft-showcase-launcher" data-ft-role="launcher" type="button" aria-label="Open Svelte component lab" aria-haspopup="dialog" aria-expanded={open} onclick={() => open = true}><img src={svelteLogo} class="ft-showcase-launcher-image framework-test-logo-animation" alt="" aria-hidden="true"><span class="ft-showcase-launcher-label">Open</span></button>
+<button bind:this={launcher} class="ft-showcase-launcher" data-ft-role="launcher" data-ft-framework="svelte" type="button" aria-label="Open Svelte component lab" aria-haspopup="dialog" aria-expanded={open} onclick={() => open = true}><span class="ft-showcase-launcher-indicator" aria-hidden="true"></span><span class="ft-showcase-launcher-logo" aria-hidden="true"><img src={svelteLogo} class="ft-showcase-launcher-image framework-test-logo-animation" alt="" aria-hidden="true"></span><span class="ft-showcase-launcher-label">Open</span></button>
 {#if open && launcher}<Modal {nickname} {dependencies} {pageBridgeEnvironment} {lifecycleDependencies} {registerRootLifecycle} {model} opener={launcher} onclose={() => open = false} />{/if}

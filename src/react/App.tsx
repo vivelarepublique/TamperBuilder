@@ -28,13 +28,15 @@ export default function App({ nickname, dependencies, pageBridgeEnvironment, lif
                 ref={launcherRef}
                 className='ft-showcase-launcher'
                 data-ft-role='launcher'
+                data-ft-framework='react'
                 type='button'
                 aria-label='Open React component lab'
                 aria-haspopup='dialog'
                 aria-expanded={expanded}
                 onClick={() => { if (launcherRef.current !== null) modalRef.current?.open(launcherRef.current); }}
             >
-                <img src={reactLogo} className='ft-showcase-launcher-image framework-test-logo-animation' alt='' aria-hidden='true' />
+                <span className='ft-showcase-launcher-indicator' aria-hidden='true'></span>
+                <span className='ft-showcase-launcher-logo' aria-hidden='true'><img src={reactLogo} className='ft-showcase-launcher-image framework-test-logo-animation' alt='' aria-hidden='true' /></span>
                 <span className='ft-showcase-launcher-label'>Open</span>
             </button>
             <Modal ref={modalRef} nickname={nickname} dependencies={dependencies} pageBridgeEnvironment={pageBridgeEnvironment} lifecycleDependencies={lifecycleDependencies} registerRootLifecycle={registerRootLifecycle} onExpandedChange={setExpanded} />

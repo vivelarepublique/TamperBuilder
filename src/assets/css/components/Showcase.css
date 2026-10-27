@@ -21,11 +21,44 @@
     position: fixed;
     z-index: 9998;
     top: 16px;
+    right: auto;
+    bottom: auto;
     left: 16px;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    box-sizing: border-box;
+    width: auto;
+    min-width: 0;
     max-width: calc(100vw - 32px);
+    height: auto;
+    min-height: 0;
+    max-height: calc(100dvh - 32px);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    isolation: isolate;
+}
+
+#framework-test-launcher-rail > *,
+#framework-test-launcher-rail lit-app {
+    position: static;
+    display: block;
+    box-sizing: border-box;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
 }
 
 #framework-test-launcher-rail span,
@@ -76,7 +109,6 @@
     display: block;
 }
 
-#framework-test-launcher-rail span,
 .ft-showcase-dialog label,
 .ft-showcase-dialog span {
     display: inline;
@@ -132,7 +164,6 @@
     font: inherit;
 }
 
-#framework-test-launcher-rail .ft-showcase-launcher,
 .ft-showcase-dialog .ft-showcase-button {
     width: auto;
     min-width: 44px;
@@ -149,13 +180,158 @@
 }
 
 #framework-test-launcher-rail .ft-showcase-launcher {
+    position: relative;
     display: inline-flex;
-    width: 120px;
+    box-sizing: border-box;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
     height: 44px;
+    min-height: 44px;
+    max-height: 44px;
+    flex: 0 0 44px;
     align-items: center;
     justify-content: center;
+    gap: 0;
+    margin: 0;
+    padding: 6px;
+    overflow: visible;
+    border: 1px solid var(--ft-showcase-border);
+    border-radius: var(--ft-showcase-radius);
+    background: var(--ft-showcase-accent);
+    color: #fff;
+    font: inherit;
+    line-height: 1;
+    letter-spacing: normal;
+    text-align: center;
+    text-decoration: none;
+    text-transform: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: width 180ms ease, max-width 180ms ease, flex-basis 180ms ease, gap 180ms ease, padding 180ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher[data-ft-framework='vue'] {
+    --ft-showcase-framework-color: #42b883;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher[data-ft-framework='react'] {
+    --ft-showcase-framework-color: #61dafb;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher[data-ft-framework='preact'] {
+    --ft-showcase-framework-color: #673ab8;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher[data-ft-framework='lit'] {
+    --ft-showcase-framework-color: #324fff;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher[data-ft-framework='svelte'] {
+    --ft-showcase-framework-color: #ff3e00;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher[data-ft-framework='solid'] {
+    --ft-showcase-framework-color: #76b3e1;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher-indicator {
+    position: absolute;
+    display: block;
+    box-sizing: border-box;
+    width: 14px;
+    min-width: 14px;
+    max-width: 14px;
+    height: 14px;
+    min-height: 14px;
+    max-height: 14px;
+    flex: 0 0 14px;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    background: var(--ft-showcase-framework-color);
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.16);
+    opacity: 1;
+    pointer-events: none;
+    transform: rotate(45deg) scale(1);
+    transition: opacity 120ms ease, transform 180ms ease;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher-logo {
+    display: block;
+    box-sizing: border-box;
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+    height: 24px;
+    min-height: 24px;
+    max-height: 24px;
+    flex: 0 0 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    background: transparent;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-6px);
+    transition: width 180ms ease, min-width 180ms ease, max-width 180ms ease, flex-basis 180ms ease, opacity 120ms ease, transform 180ms ease;
+}
+
+#framework-test-launcher-rail .ft-showcase-launcher-label {
+    display: block;
+    box-sizing: border-box;
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+    height: 24px;
+    min-height: 24px;
+    max-height: 24px;
+    flex: 0 0 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: width 180ms ease, min-width 180ms ease, max-width 180ms ease, flex-basis 180ms ease, opacity 120ms ease, transform 180ms ease;
+}
+
+#framework-test-launcher-rail:hover .ft-showcase-launcher,
+#framework-test-launcher-rail:focus-within .ft-showcase-launcher {
+    width: 120px;
+    max-width: 120px;
+    flex-basis: 120px;
     gap: 8px;
     padding: 6px 12px;
+}
+
+#framework-test-launcher-rail:hover .ft-showcase-launcher-indicator,
+#framework-test-launcher-rail:focus-within .ft-showcase-launcher-indicator {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.65);
+}
+
+#framework-test-launcher-rail:hover .ft-showcase-launcher-logo,
+#framework-test-launcher-rail:focus-within .ft-showcase-launcher-logo {
+    width: 24px;
+    min-width: 24px;
+    max-width: 24px;
+    flex-basis: 24px;
+    opacity: 1;
+    transform: translateX(0);
+}
+
+#framework-test-launcher-rail:hover .ft-showcase-launcher-label,
+#framework-test-launcher-rail:focus-within .ft-showcase-launcher-label {
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    flex-basis: 40px;
+    opacity: 1;
+    transform: translateX(0);
 }
 
 #framework-test-launcher-rail .ft-showcase-launcher:hover,
@@ -194,7 +370,6 @@
     height: 24px;
     min-height: 24px;
     max-height: 24px;
-    flex: 0 0 24px;
     margin: 0;
     padding: 0;
     border: 0;
@@ -603,29 +778,12 @@
 
 @media (max-width: 599px) {
     #framework-test-launcher-rail {
-        top: auto;
-        right: 8px;
-        bottom: 8px;
+        top: 8px;
+        right: auto;
+        bottom: auto;
         left: 8px;
-        flex-direction: row;
-        max-width: none;
-        overflow-x: auto;
-    }
-
-    #framework-test-launcher-rail .ft-showcase-launcher {
-        width: 44px;
-        min-width: 44px;
-        padding: 6px;
-    }
-
-    #framework-test-launcher-rail .ft-showcase-launcher-label {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        margin: -1px;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
+        max-width: calc(100vw - 16px);
+        max-height: calc(100dvh - 16px);
     }
 
     .ft-showcase-dialog {
@@ -641,6 +799,9 @@
 
 @media (prefers-reduced-motion: reduce) {
     #framework-test-launcher-rail .ft-showcase-launcher,
+    #framework-test-launcher-rail .ft-showcase-launcher-indicator,
+    #framework-test-launcher-rail .ft-showcase-launcher-logo,
+    #framework-test-launcher-rail .ft-showcase-launcher-label,
     #framework-test-launcher-rail .framework-test-logo-animation,
     .ft-showcase-dialog,
     .ft-showcase-dialog .ft-showcase-button,

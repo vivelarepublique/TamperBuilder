@@ -7,11 +7,27 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { act } from 'react';
 import { describe, expect, it } from 'vitest';
+import type { RenderLabDependencies } from '../../src/common/components/benchmark';
+import { createLitHarness } from '../framework/harness/lit';
+import { createPreactHarness } from '../framework/harness/preact';
 import { createReactHarness } from '../framework/harness/react';
+import { createSolidHarness } from '../framework/harness/solid';
+import { createSvelteHarness } from '../framework/harness/svelte';
+import type { ComponentLabHarnessFactory } from '../framework/harness/types';
+import { createVueHarness } from '../framework/harness/vue';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const css = readFileSync(path.join(process.cwd(), 'src/assets/css/components/Showcase.css'), 'utf8');
+const launcherHarnessFactories: readonly ComponentLabHarnessFactory[] = [
+    createVueHarness,
+    createReactHarness,
+    createPreactHarness,
+    createLitHarness,
+    createSvelteHarness,
+    createSolidHarness,
+];
+const frameworkIdentities = ['vue', 'react', 'preact', 'lit', 'svelte', 'solid'] as const;
 
 function luminance(hex: string): number {
     const channels = hex.match(/[\da-f]{2}/giu)?.map(value => Number.parseInt(value, 16) / 255) ?? [];
@@ -31,6 +47,22 @@ function expectHostRuleIsolated(element: Element): void {
     expect(style.marginTop).not.toBe('99px');
 }
 
+interface BrowserLauncherState {
+    readonly frameworks: readonly string[];
+    readonly buttonWidths: readonly number[];
+    readonly buttonHeights: readonly number[];
+    readonly indicatorWidths: readonly number[];
+    readonly indicatorOpacities: readonly string[];
+    readonly indicatorColors: readonly string[];
+    readonly logoWidths: readonly number[];
+    readonly logoDisplays: readonly string[];
+    readonly logoOpacities: readonly string[];
+    readonly logoOverflow: readonly string[];
+    readonly labelWidths: readonly number[];
+    readonly labelDisplays: readonly string[];
+    readonly labelOpacities: readonly string[];
+}
+
 interface BrowserLayoutResult {
     readonly clientWidth: number;
     readonly innerWidth: number;
@@ -42,6 +74,22 @@ interface BrowserLayoutResult {
     readonly highlightOutlineColor: string;
     readonly highlightOutlineStyle: string;
     readonly highlightOutlineWidth: string;
+    readonly initialLauncherState: BrowserLauncherState;
+    readonly immediateLauncherState: BrowserLauncherState;
+    readonly expandedLauncherState: BrowserLauncherState;
+    readonly usableFrameworks: readonly string[];
+    readonly railFlexDirection: string;
+    readonly railPosition: string;
+    readonly railViewportContained: boolean;
+    readonly focusOutlineContained: boolean;
+    readonly focusOutlineStyle: string;
+    readonly focusOutlineWidth: string;
+    readonly hostLayoutStable: boolean;
+    readonly railMatchesFocusWithin: boolean;
+    readonly activeFramework: string | null;
+    readonly reducedMotion: boolean;
+    readonly transitionDurations: readonly string[];
+    readonly animationDurations: readonly string[];
 }
 
 function findBrowserExecutable(): string {
@@ -60,39 +108,84 @@ function findBrowserExecutable(): string {
     return executable;
 }
 
-function expectBrowserLayout(width: number, markup: string, hostileCss: string): void {
+function expectBrowserLayout(width: number, markup: string, hostileCss: string, emulateReducedMotion = false): void {
     const directory = mkdtempSync(path.join(tmpdir(), 'tamper-builder-layout-'));
     const documentPath = path.join(directory, 'component-lab.html');
     const profilePath = path.join(directory, 'profile');
     const browser = findBrowserExecutable();
     const innerDocument = `<!doctype html>
         <html><head><meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>${hostileCss}\n${css}</style></head><body>${markup}
+        <style>${hostileCss}\n${css}</style></head><body><div id="host-layout-probe" style="display:block;box-sizing:border-box;width:100%;height:24px;margin:0;padding:0;border:0"></div>${markup}
         <input id="external-highlight-target" data-ft-showcase-page-bridge-highlight="tamper-builder-browser-probe" style="position:fixed;width:20px;height:20px"></body></html>`;
     const probe = `
         const frame = document.getElementById('layout-frame');
         frame.addEventListener('load', () => {
             const frameDocument = frame.contentDocument;
+            const frameWindow = frame.contentWindow;
+            frameDocument.querySelector('.ft-showcase-dialog')?.setAttribute('open', '');
             const tabList = frameDocument.querySelector('[role="tablist"]');
             const activeTab = frameDocument.querySelector('[role="tab"][aria-selected="true"]');
+            const rail = frameDocument.getElementById('framework-test-launcher-rail');
+            const launchers = Array.from(frameDocument.querySelectorAll('[data-ft-role="launcher"]'));
+            const hostProbe = frameDocument.getElementById('host-layout-probe');
+            const readLauncherState = () => ({
+                frameworks: launchers.map(element => element.getAttribute('data-ft-framework') || ''),
+                buttonWidths: launchers.map(element => element.getBoundingClientRect().width),
+                buttonHeights: launchers.map(element => element.getBoundingClientRect().height),
+                indicatorWidths: launchers.map(element => Number.parseFloat(frameWindow.getComputedStyle(element.querySelector('.ft-showcase-launcher-indicator')).width)),
+                indicatorOpacities: launchers.map(element => frameWindow.getComputedStyle(element.querySelector('.ft-showcase-launcher-indicator')).opacity),
+                indicatorColors: launchers.map(element => frameWindow.getComputedStyle(element.querySelector('.ft-showcase-launcher-indicator')).backgroundColor),
+                logoWidths: launchers.map(element => element.querySelector('.ft-showcase-launcher-logo').getBoundingClientRect().width),
+                logoDisplays: launchers.map(element => frameWindow.getComputedStyle(element.querySelector('.ft-showcase-launcher-logo')).display),
+                logoOpacities: launchers.map(element => frameWindow.getComputedStyle(element.querySelector('.ft-showcase-launcher-logo')).opacity),
+                logoOverflow: launchers.map(element => frameWindow.getComputedStyle(element.querySelector('.ft-showcase-launcher-logo')).overflow),
+                labelWidths: launchers.map(element => element.querySelector('.ft-showcase-launcher-label').getBoundingClientRect().width),
+                labelDisplays: launchers.map(element => frameWindow.getComputedStyle(element.querySelector('.ft-showcase-launcher-label')).display),
+                labelOpacities: launchers.map(element => frameWindow.getComputedStyle(element.querySelector('.ft-showcase-launcher-label')).opacity),
+            });
+            const initialLauncherState = readLauncherState();
+            const hostRectBefore = hostProbe.getBoundingClientRect();
             activeTab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            launchers[0]?.focus({ preventScroll: true });
+            const immediateLauncherState = readLauncherState();
+            for (const animation of rail.getAnimations({ subtree: true })) {
+                if (animation.effect?.getTiming().iterations !== Infinity) animation.finish();
+            }
+            const reducedMotion = frameWindow.matchMedia('(prefers-reduced-motion: reduce)').matches;
             setTimeout(() => setTimeout(() => {
                 const root = frameDocument.documentElement;
                 const body = frameDocument.body;
                 const listRect = tabList?.getBoundingClientRect();
                 const tabRect = activeTab?.getBoundingClientRect();
-                const highlightStyle = frame.contentWindow.getComputedStyle(frameDocument.getElementById('external-highlight-target'));
+                const railRect = rail.getBoundingClientRect();
+                const focusRect = launchers[0].getBoundingClientRect();
+                const focusStyle = frameWindow.getComputedStyle(launchers[0]);
+                const outlineExtent = Number.parseFloat(focusStyle.outlineWidth) + Number.parseFloat(focusStyle.outlineOffset);
+                const hostRectAfter = hostProbe.getBoundingClientRect();
+                const highlightStyle = frameWindow.getComputedStyle(frameDocument.getElementById('external-highlight-target'));
                 const undersizedTargets = Array.from(frameDocument.querySelectorAll('button, .ft-showcase-choice'))
                     .filter(element => {
                         const rect = element.getBoundingClientRect();
-                        return rect.width < 44 || rect.height < 44;
+                        return element.getClientRects().length > 0 && (rect.width < 44 || rect.height < 44);
                     })
                     .map(element => element.getAttribute('data-ft-role') || element.className);
+                const usableFrameworks = launchers.filter(element => {
+                    const rect = element.getBoundingClientRect();
+                    const style = frameWindow.getComputedStyle(element);
+                    return !element.disabled && rect.width >= 44 && rect.height >= 44 && style.display !== 'none' && style.visibility === 'visible' && style.pointerEvents !== 'none';
+                }).map(element => element.getAttribute('data-ft-framework'));
+                const transitionDurations = launchers.flatMap(element => [
+                    frameWindow.getComputedStyle(element).transitionDuration,
+                    frameWindow.getComputedStyle(element.querySelector('.ft-showcase-launcher-indicator')).transitionDuration,
+                    frameWindow.getComputedStyle(element.querySelector('.ft-showcase-launcher-logo')).transitionDuration,
+                    frameWindow.getComputedStyle(element.querySelector('.ft-showcase-launcher-label')).transitionDuration,
+                ]);
+                const animationDurations = launchers.map(element => frameWindow.getComputedStyle(element.querySelector('.framework-test-logo-animation')).animationDuration);
                 const result = document.createElement('pre');
                 result.id = 'layout-result';
                 result.textContent = JSON.stringify({
                     clientWidth: root.clientWidth,
-                    innerWidth: frame.contentWindow.innerWidth,
+                    innerWidth: frameWindow.innerWidth,
                     scrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
                     undersizedTargets,
                     tabListClientWidth: tabList?.clientWidth || 0,
@@ -101,9 +194,25 @@ function expectBrowserLayout(width: number, markup: string, hostileCss: string):
                     highlightOutlineColor: highlightStyle.outlineColor,
                     highlightOutlineStyle: highlightStyle.outlineStyle,
                     highlightOutlineWidth: highlightStyle.outlineWidth,
+                    initialLauncherState,
+                    immediateLauncherState,
+                    expandedLauncherState: readLauncherState(),
+                    usableFrameworks,
+                    railFlexDirection: frameWindow.getComputedStyle(rail).flexDirection,
+                    railPosition: frameWindow.getComputedStyle(rail).position,
+                    railViewportContained: railRect.top >= 0 && railRect.left >= 0 && railRect.right <= frameWindow.innerWidth && railRect.bottom <= frameWindow.innerHeight,
+                    focusOutlineContained: focusRect.top - outlineExtent >= 0 && focusRect.left - outlineExtent >= 0 && focusRect.right + outlineExtent <= frameWindow.innerWidth && focusRect.bottom + outlineExtent <= frameWindow.innerHeight,
+                    focusOutlineStyle: focusStyle.outlineStyle,
+                    focusOutlineWidth: focusStyle.outlineWidth,
+                    hostLayoutStable: Math.abs(hostRectBefore.top - hostRectAfter.top) < 0.1 && Math.abs(hostRectBefore.left - hostRectAfter.left) < 0.1 && Math.abs(hostRectBefore.width - hostRectAfter.width) < 0.1 && Math.abs(hostRectBefore.height - hostRectAfter.height) < 0.1,
+                    railMatchesFocusWithin: rail.matches(':focus-within'),
+                    activeFramework: frameDocument.activeElement?.getAttribute('data-ft-framework') || null,
+                    reducedMotion,
+                    transitionDurations,
+                    animationDurations,
                 });
                 document.body.append(result);
-            }, 16), 16);
+            }, 16), reducedMotion ? 0 : 240);
         });
         frame.srcdoc = ${JSON.stringify(innerDocument)};
     `;
@@ -112,7 +221,7 @@ function expectBrowserLayout(width: number, markup: string, hostileCss: string):
         <script>${probe}</script></body></html>`);
 
     try {
-        const result = spawnSync(browser, [
+        const browserArguments = [
             '--headless=new',
             '--disable-gpu',
             `--user-data-dir=${profilePath}`,
@@ -122,10 +231,12 @@ function expectBrowserLayout(width: number, markup: string, hostileCss: string):
             '--disable-backgrounding-occluded-windows',
             '--disable-renderer-backgrounding',
             '--run-all-compositor-stages-before-draw',
-            '--virtual-time-budget=1000',
+            '--virtual-time-budget=1500',
             '--dump-dom',
-            pathToFileURL(documentPath).href,
-        ], { encoding: 'utf8', timeout: 30_000 });
+        ];
+        if (emulateReducedMotion) browserArguments.push('--force-prefers-reduced-motion=reduce');
+        browserArguments.push(pathToFileURL(documentPath).href);
+        const result = spawnSync(browser, browserArguments, { encoding: 'utf8', timeout: 30_000 });
         if (result.error !== undefined) throw result.error;
         expect(result.status, result.stderr).toBe(0);
         const match = result.stdout.match(/<pre id="layout-result">([^<]+)<\/pre>/u);
@@ -137,7 +248,47 @@ function expectBrowserLayout(width: number, markup: string, hostileCss: string):
         expect(layout.undersizedTargets).toEqual([]);
         expect(layout.activeTabVisible, JSON.stringify(layout)).toBe(true);
         expect([layout.highlightOutlineStyle, layout.highlightOutlineWidth, layout.highlightOutlineColor]).toEqual(['solid', '3px', 'rgb(11, 107, 203)']);
+        expect(layout.initialLauncherState.frameworks).toEqual(frameworkIdentities);
+        expect(layout.initialLauncherState.buttonWidths).toEqual(Array(6).fill(44));
+        expect(layout.initialLauncherState.buttonHeights).toEqual(Array(6).fill(44));
+        expect(layout.initialLauncherState.indicatorWidths).toEqual(Array(6).fill(14));
+        expect(layout.initialLauncherState.indicatorOpacities).toEqual(Array(6).fill('1'));
+        expect(layout.initialLauncherState.indicatorColors).toEqual([
+            'rgb(66, 184, 131)',
+            'rgb(97, 218, 251)',
+            'rgb(103, 58, 184)',
+            'rgb(50, 79, 255)',
+            'rgb(255, 62, 0)',
+            'rgb(118, 179, 225)',
+        ]);
+        expect(layout.initialLauncherState.logoWidths).toEqual(Array(6).fill(0));
+        expect(layout.initialLauncherState.logoDisplays).toEqual(Array(6).fill('block'));
+        expect(layout.initialLauncherState.logoOpacities).toEqual(Array(6).fill('0'));
+        expect(layout.initialLauncherState.logoOverflow).toEqual(Array(6).fill('hidden'));
+        expect(layout.initialLauncherState.labelWidths).toEqual(Array(6).fill(0));
+        expect(layout.initialLauncherState.labelDisplays).toEqual(Array(6).fill('block'));
+        expect(layout.initialLauncherState.labelOpacities).toEqual(Array(6).fill('0'));
+        expect(layout.expandedLauncherState.buttonWidths, JSON.stringify(layout)).toEqual(Array(6).fill(120));
+        expect(layout.expandedLauncherState.buttonHeights).toEqual(Array(6).fill(44));
+        expect(layout.expandedLauncherState.indicatorOpacities).toEqual(Array(6).fill('0'));
+        expect(layout.expandedLauncherState.logoWidths).toEqual(Array(6).fill(24));
+        expect(layout.expandedLauncherState.logoOpacities).toEqual(Array(6).fill('1'));
+        expect(layout.expandedLauncherState.labelWidths).toEqual(Array(6).fill(40));
+        expect(layout.expandedLauncherState.labelOpacities).toEqual(Array(6).fill('1'));
+        expect(layout.usableFrameworks).toEqual(frameworkIdentities);
+        expect(layout.railFlexDirection).toBe('column');
+        expect(layout.railPosition).toBe('fixed');
+        expect(layout.railViewportContained).toBe(true);
+        expect(layout.focusOutlineContained).toBe(true);
+        expect([layout.focusOutlineStyle, layout.focusOutlineWidth]).toEqual(['solid', '3px']);
+        expect(layout.hostLayoutStable).toBe(true);
         if (width === 390) expect(layout.tabListScrollWidth).toBeGreaterThan(layout.tabListClientWidth);
+        if (emulateReducedMotion) {
+            expect(layout.reducedMotion).toBe(true);
+            expect(layout.immediateLauncherState.buttonWidths).toEqual(Array(6).fill(120));
+            expect(layout.transitionDurations.every(duration => duration.split(',').every(value => value.trim() === '0s'))).toBe(true);
+            expect(layout.animationDurations).toEqual(Array(6).fill('0s'));
+        }
     } finally {
         rmSync(directory, { force: true, recursive: true });
     }
@@ -170,31 +321,34 @@ async function renderLabAtViewport(width: number): Promise<void> {
     rail.id = 'framework-test-launcher-rail';
     document.head.append(hostStyle, showcaseStyle);
     document.body.appendChild(rail);
-    const harness = createReactHarness();
+    const harnesses = launcherHarnessFactories.map(factory => factory());
 
     try {
-        await harness.mount({
-            dependencies: {
-                scheduler: {
-                    now: () => 0,
-                    requestFrame: () => 1,
-                    cancelFrame: () => undefined,
-                    setTimer: (callback, milliseconds) => setTimeout(callback, milliseconds),
-                    clearTimer: handle => clearTimeout(handle),
-                },
-                runScenario: options => {
-                    const rows = [{ id: 1, label: 'Row 0001', revision: 0 as const }];
-                    options.adapter.replaceRows(rows);
-                    options.adapter.updateRows(rows);
-                    options.adapter.removeRows(rows);
-                    return Promise.resolve({ createMs: 1, updateMs: 1, removeMs: 1, remainingRows: 1 });
-                },
+        const harnessDependencies: RenderLabDependencies = {
+            scheduler: {
+                now: () => 0,
+                requestFrame: () => 1,
+                cancelFrame: () => undefined,
+                setTimer: (callback, milliseconds) => setTimeout(callback, milliseconds),
+                clearTimer: handle => clearTimeout(handle),
             },
-        });
-        const target = harness.getTarget();
-        rail.appendChild(target);
+            runScenario: options => {
+                const rows = [{ id: 1, label: 'Row 0001', revision: 0 as const }];
+                options.adapter.replaceRows(rows);
+                options.adapter.updateRows(rows);
+                options.adapter.removeRows(rows);
+                return Promise.resolve({ createMs: 1, updateMs: 1, removeMs: 1, remainingRows: 1 });
+            },
+        };
+        for (const harness of harnesses) {
+            await harness.mount({ dependencies: harnessDependencies });
+            rail.appendChild(harness.getTarget());
+        }
+
+        const reactHarness = harnesses.find(harness => harness.framework === 'react')!;
+        const target = reactHarness.getTarget();
         act(() => target.querySelector<HTMLButtonElement>('[data-ft-role="launcher"]')?.click());
-        await harness.flush();
+        await reactHarness.flush();
         const dialog = target.querySelector<HTMLDialogElement>('[data-ft-role="dialog"]')!;
         const task = target.querySelector<HTMLElement>('[data-ft-role="task-workbench"]')!;
 
@@ -212,9 +366,9 @@ async function renderLabAtViewport(width: number): Promise<void> {
         expectBrowserLayout(width, rail.outerHTML, hostStyle.textContent ?? '');
 
         act(() => target.querySelector<HTMLButtonElement>('[data-ft-role="tab-render"]')?.click());
-        await harness.flush();
+        await reactHarness.flush();
         act(() => target.querySelector<HTMLButtonElement>('[data-ft-role="render-run"]')?.click());
-        await harness.flush();
+        await reactHarness.flush();
         for (const selector of ['dl', 'dt', 'dd', 'table', 'thead', 'tbody', 'tr', 'th', 'td']) {
             const element = target.querySelector(selector);
             if (element === null) throw new Error(`Missing Render semantic element: ${selector}`);
@@ -236,7 +390,7 @@ async function renderLabAtViewport(width: number): Promise<void> {
         ];
         for (const [tabRole, labRole, semanticSelectors] of panelCases) {
             act(() => target.querySelector<HTMLButtonElement>(`[data-ft-role="${tabRole}"]`)?.click());
-            await harness.flush();
+            await reactHarness.flush();
             const lab = target.querySelector<HTMLElement>(`[data-ft-role="${labRole}"]`);
             if (lab === null) throw new Error(`Missing ${labRole}.`);
             for (const selector of semanticSelectors) {
@@ -247,8 +401,9 @@ async function renderLabAtViewport(width: number): Promise<void> {
             }
             expectBrowserLayout(width, rail.outerHTML, hostStyle.textContent ?? '');
         }
+        expectBrowserLayout(width, rail.outerHTML, hostStyle.textContent ?? '', true);
     } finally {
-        await harness.unmount();
+        for (const harness of [...harnesses].reverse()) await harness.unmount();
         hostStyle.remove();
         showcaseStyle.remove();
         rail.remove();
@@ -264,11 +419,14 @@ describe('Component Lab visual contract', () => {
         expect(css).toContain('.ft-showcase-dialog');
     });
 
-    it('contains responsive static containment without claiming jsdom layout or paint coverage', () => {
+    it('contains grouped launcher expansion, responsive containment, and reduced-motion overrides', () => {
         expect(css).toContain('@media (max-width: 599px)');
         expect(css).toContain('@media (max-width: 767px)');
         expect(css).toContain('@media (prefers-reduced-motion: reduce)');
         expect(css).toContain('@keyframes framework-test-scale');
+        expect(css).toContain('#framework-test-launcher-rail:hover .ft-showcase-launcher,\n#framework-test-launcher-rail:focus-within .ft-showcase-launcher');
+        expect(css).toContain('#framework-test-launcher-rail:hover .ft-showcase-launcher-logo,\n#framework-test-launcher-rail:focus-within .ft-showcase-launcher-logo');
+        expect(css).toContain('#framework-test-launcher-rail:hover .ft-showcase-launcher-label,\n#framework-test-launcher-rail:focus-within .ft-showcase-launcher-label');
         expect(css).toContain('max-width: calc(100vw - 32px)');
         expect(css).toContain('width: calc(100vw - 16px)');
         expect(css).toContain('overflow-x: auto');
@@ -278,7 +436,7 @@ describe('Component Lab visual contract', () => {
 
     it.each([1440, 390])('restores semantic baselines and page geometry against ordinary host rules at %ipx', async width => {
         await renderLabAtViewport(width);
-    }, 60_000);
+    }, 90_000);
 
     it('uses portable backgrounds for choice indicators and preserves native input states', () => {
         expect(css).not.toMatch(/\.ft-showcase-choice::(?:before|after)/u);

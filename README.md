@@ -37,7 +37,7 @@ The default `config/global-configuration.yaml` deliberately selects all six fram
 
 ## Component Lab showcase
 
-Each selected framework mounts the same **Component Lab** UX: a launcher opens a native modal dialog with five framework-native Labs in the fixed order **Task → Render → Page Bridge → Composition → Lifecycle**. Apart from each framework logo and its existing animation, the six implementations intentionally share the same copy, section-level DOM structure, controls, responsive layout, focus behavior, and accessibility semantics.
+Each selected framework mounts the same **Component Lab** UX: a compact top-left launcher rail shows six framework-color indicators, then smoothly reveals the framework logos and labels when the rail is hovered or receives keyboard focus. Every launcher opens a native modal dialog with five framework-native Labs in the fixed order **Task → Render → Page Bridge → Composition → Lifecycle**. Apart from each framework logo and its existing animation, the six implementations intentionally share the same copy, section-level DOM structure, controls, responsive layout, focus behavior, and accessibility semantics.
 
 | Framework | Framework-native idioms demonstrated |
 | --- | --- |

@@ -24,8 +24,9 @@
 </script>
 
 <template>
-    <button ref="launcher" class="ft-showcase-launcher" data-ft-role="launcher" type="button" :aria-label="`Open Vue component lab`" aria-haspopup="dialog" :aria-expanded="expanded" @click="open">
-        <img :src="vueLogo" class="ft-showcase-launcher-image framework-test-logo-animation" alt="" aria-hidden="true">
+    <button ref="launcher" class="ft-showcase-launcher" data-ft-role="launcher" data-ft-framework="vue" type="button" :aria-label="`Open Vue component lab`" aria-haspopup="dialog" :aria-expanded="expanded" @click="open">
+        <span class="ft-showcase-launcher-indicator" aria-hidden="true" />
+        <span class="ft-showcase-launcher-logo" aria-hidden="true"><img :src="vueLogo" class="ft-showcase-launcher-image framework-test-logo-animation" alt="" aria-hidden="true"></span>
         <span class="ft-showcase-launcher-label">Open</span>
     </button>
     <Modal ref="modal" :nickname="nickname" :dependencies="dependencies" :page-bridge-environment="pageBridgeEnvironment" :lifecycle-dependencies="lifecycleDependencies" :register-root-lifecycle="registerRootLifecycle" @expanded="expanded = $event" />

@@ -552,6 +552,49 @@ function idleLifecycleDependencies(runTask: LifecycleLabDependencies['runTask'] 
 }
 
 describe('six-framework five-tab canonical contract', () => {
+    it('renders exact compact launcher identity, DOM, decoration, and accessibility parity', async () => {
+        const identities = [
+            ['vue', 'Open Vue component lab'],
+            ['react', 'Open React component lab'],
+            ['preact', 'Open Preact component lab'],
+            ['lit', 'Open Lit component lab'],
+            ['svelte', 'Open Svelte component lab'],
+            ['solid', 'Open Solid component lab'],
+        ] as const;
+        expect(harnessFactories.map(factory => factory().framework)).toEqual(identities.map(([framework]) => framework));
+
+        for (const [index, factory] of harnessFactories.entries()) {
+            await withHarness(factory, async harness => {
+                await harness.mount();
+                const launcher = getByRole<HTMLButtonElement>(harness.getTarget(), 'launcher');
+                const [framework, accessibleName] = identities[index];
+                expect(launcher.tagName).toBe('BUTTON');
+                expect(launcher.type).toBe('button');
+                expect(launcher.dataset.ftFramework).toBe(framework);
+                expect(launcher.getAttribute('aria-label')).toBe(accessibleName);
+                expect(launcher.getAttribute('aria-haspopup')).toBe('dialog');
+                expect(launcher.getAttribute('aria-expanded')).toBe('false');
+                expect(Array.from(launcher.children, child => [child.tagName, child.className])).toEqual([
+                    ['SPAN', 'ft-showcase-launcher-indicator'],
+                    ['SPAN', 'ft-showcase-launcher-logo'],
+                    ['SPAN', 'ft-showcase-launcher-label'],
+                ]);
+
+                const indicator = launcher.children[0];
+                const logo = launcher.children[1];
+                const label = launcher.children[2];
+                expect([indicator.getAttribute('aria-hidden'), indicator.textContent, indicator.childElementCount]).toEqual(['true', '', 0]);
+                expect([logo.getAttribute('aria-hidden'), logo.childElementCount]).toEqual(['true', 1]);
+                const image = logo.firstElementChild;
+                expect(image?.tagName).toBe('IMG');
+                expect(image?.classList.contains('ft-showcase-launcher-image')).toBe(true);
+                expect(image?.classList.contains('framework-test-logo-animation')).toBe(true);
+                expect([image?.getAttribute('alt'), image?.getAttribute('aria-hidden')]).toEqual(['', 'true']);
+                expect([label.getAttribute('aria-hidden'), label.textContent]).toEqual([null, 'Open']);
+            });
+        }
+    });
+
     it('renders identical section contracts and exact keyboard scrolling across all roots', async () => {
         const signatures: unknown[][] = [];
         const originalScrollDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
