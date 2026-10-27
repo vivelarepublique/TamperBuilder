@@ -32,7 +32,7 @@ export function bing() {
 export function google() {
     const selector: CommonSelectors = {
         tagName: 'textarea',
-        id: 'APjFqb',
+        id: 'ti6dpd',
     };
 
     try {
